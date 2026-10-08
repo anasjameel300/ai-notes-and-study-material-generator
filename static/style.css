@@ -355,29 +355,92 @@ div[data-testid="stRadio"] svg {
   font-size: 0.85rem;
 }
 
-/* Stateful Segmented Navigation Bar */
+/* ==========================================================================
+   STATEFUL SEGMENTED NAVIGATION BAR (HIGH CONTRAST & THEME RESILIENT)
+   ========================================================================== */
+div[data-testid="stSegmentedControl"],
+div[data-testid="stSegmentedControl"] > div,
+div[data-testid="stSegmentedControl"] [role="radiogroup"],
 [data-baseweb="segmented-control"] {
   background-color: #f1f5f9 !important;
-  padding: 4px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
   border-radius: 8px !important;
-  border: 1px solid #e2e8f0 !important;
+  padding: 4px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 
+/* Default / Unselected Segmented Buttons */
+div[data-testid="stSegmentedControl"] button,
+div[data-testid="stSegmentedControl"] [role="radiogroup"] button,
 [data-baseweb="segmented-control"] button {
-  color: #475569 !important;
-  font-weight: 500 !important;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
   border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  margin: 2px !important;
+  padding: 6px 14px !important;
+  transition: all 0.15s ease-in-out !important;
+  outline: none !important;
 }
 
-[data-baseweb="segmented-control"] button[aria-selected="true"] {
-  background-color: #0f172a !important;
-  color: #ffffff !important;
+/* Hover state on unselected buttons */
+div[data-testid="stSegmentedControl"] button:hover,
+div[data-testid="stSegmentedControl"] [role="radiogroup"] button:hover,
+[data-baseweb="segmented-control"] button:hover {
+  background-color: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+/* Text inside unselected buttons */
+div[data-testid="stSegmentedControl"] button p,
+div[data-testid="stSegmentedControl"] button span,
+div[data-testid="stSegmentedControl"] button div,
+div[data-testid="stSegmentedControl"] button [data-testid="stMarkdownContainer"] p,
+[data-baseweb="segmented-control"] button p,
+[data-baseweb="segmented-control"] button span {
+  color: #0f172a !important;
   font-weight: 600 !important;
 }
 
+/* Selected Button (Active state) */
+div[data-testid="stSegmentedControl"] button[aria-checked="true"],
+div[data-testid="stSegmentedControl"] button[aria-selected="true"],
+div[data-testid="stSegmentedControl"] button[data-selected="true"],
+[data-baseweb="segmented-control"] button[aria-selected="true"],
+[data-baseweb="segmented-control"] button[aria-checked="true"] {
+  background-color: #0f172a !important;
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid #0f172a !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25) !important;
+}
+
+/* Text inside selected button */
+div[data-testid="stSegmentedControl"] button[aria-checked="true"] p,
+div[data-testid="stSegmentedControl"] button[aria-checked="true"] span,
+div[data-testid="stSegmentedControl"] button[aria-checked="true"] div,
+div[data-testid="stSegmentedControl"] button[aria-checked="true"] [data-testid="stMarkdownContainer"] p,
+div[data-testid="stSegmentedControl"] button[aria-selected="true"] p,
+div[data-testid="stSegmentedControl"] button[aria-selected="true"] span,
+div[data-testid="stSegmentedControl"] button[aria-selected="true"] div,
+div[data-testid="stSegmentedControl"] button[aria-selected="true"] [data-testid="stMarkdownContainer"] p,
 [data-baseweb="segmented-control"] button[aria-selected="true"] p,
 [data-baseweb="segmented-control"] button[aria-selected="true"] span {
   color: #ffffff !important;
+  fill: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Prevent unwanted focus ring artifacts */
+div[data-testid="stSegmentedControl"] button:focus,
+div[data-testid="stSegmentedControl"] button:focus-visible {
+  outline: none !important;
+  border-color: #0f172a !important;
 }
 
 /* Streamlit Expanders */
@@ -405,4 +468,108 @@ code, pre, [data-testid="stCode"] {
 /* Metrics */
 [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
   color: #0f172a !important;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS & TOUCH ADAPTATION (SCREEN WIDTH <= 768px)
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+  /* Mobile App Header */
+  .app-header {
+    padding: 1.25rem 1rem !important;
+    margin-bottom: 1.25rem !important;
+    border-radius: 8px !important;
+  }
+
+  .app-header h1 {
+    font-size: 1.45rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .app-header p {
+    font-size: 0.88rem !important;
+    line-height: 1.45 !important;
+  }
+
+  /* Make Container Padding Finger-Friendly without Cramping */
+  .block-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-top: 1.75rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 100% !important;
+  }
+
+  /* Horizontal Scrollable Tabs Bar on Mobile (No wrapping or squishing) */
+  div[data-testid="stSegmentedControl"],
+  div[data-testid="stSegmentedControl"] > div,
+  div[data-testid="stSegmentedControl"] [role="radiogroup"],
+  [data-baseweb="segmented-control"] {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 4px 2px !important;
+  }
+
+  div[data-testid="stSegmentedControl"] button,
+  [data-baseweb="segmented-control"] button {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    font-size: 0.82rem !important;
+    padding: 7px 11px !important;
+    margin: 2px 3px !important;
+  }
+
+  /* Stack columns cleanly on mobile when space is restricted */
+  [data-testid="column"] {
+    min-width: 100% !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Flashcard Component Mobile Tuning */
+  .flashcard-box {
+    padding: 1.25rem 1rem !important;
+    min-height: 160px !important;
+  }
+
+  .flashcard-content {
+    font-size: 1.05rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .flashcard-answer {
+    padding: 0.85rem !important;
+    font-size: 0.92rem !important;
+  }
+
+  /* Exam Timer Banner Responsive Layout */
+  .timer-banner {
+    flex-direction: column !important;
+    gap: 8px !important;
+    text-align: center !important;
+    padding: 10px 12px !important;
+  }
+
+  .timer-digits {
+    font-size: 1.35rem !important;
+  }
+
+  /* Tables & Mermaid diagrams horizontal scroll */
+  table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Buttons Full Touch Target */
+  button {
+    min-height: 40px !important;
+  }
 }

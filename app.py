@@ -131,18 +131,43 @@ with st.sidebar:
         index=0
     )
 
-    env_gemini = os.getenv("GEMINI_API_KEY", "")
-    env_openrouter = os.getenv("OPENROUTER_API_KEY", "")
-    env_openai = os.getenv("OPENAI_API_KEY", "")
+    # Helper to securely fetch secret from env or streamlit secrets without exposing to client DOM
+    def get_server_secret(key_name: str) -> str:
+        val = os.getenv(key_name, "")
+        if not val:
+            try:
+                if hasattr(st, "secrets") and key_name in st.secrets:
+                    val = str(st.secrets[key_name])
+            except Exception:
+                pass
+        return (val or "").strip()
+
+    env_gemini = get_server_secret("GEMINI_API_KEY")
+    env_openrouter = get_server_secret("OPENROUTER_API_KEY")
+    env_openai = get_server_secret("OPENAI_API_KEY")
+
+    api_key_input = ""
 
     if provider_choice == "Google Gemini":
-        api_key_input = st.text_input(
-            "Gemini API Key",
+        has_server_key = bool(env_gemini)
+        if has_server_key:
+            st.success("🔒 Server API Key Active (Securely Loaded)")
+            key_placeholder = "Using server key (leave blank, or enter custom key)"
+            key_help = "A server key is securely loaded from environment variables. You do not need to enter anything. Enter your own key only if you wish to override it."
+        else:
+            st.info("ℹ️ Enter your Gemini API key below to proceed.")
+            key_placeholder = "AIzaSy..."
+            key_help = "Get your personal key at https://aistudio.google.com/app/apikey"
+
+        user_custom_key = st.text_input(
+            "Gemini API Key (Optional Override)" if has_server_key else "Gemini API Key",
             type="password",
-            value=env_gemini,
-            placeholder="AIzaSy...",
-            help="Get your key at https://aistudio.google.com/app/apikey"
+            value="",
+            placeholder=key_placeholder,
+            help=key_help
         )
+        api_key_input = user_custom_key.strip() if user_custom_key.strip() else env_gemini
+
         gemini_model_choice = st.selectbox(
             "Gemini Model Tier",
             [
@@ -161,13 +186,25 @@ with st.sidebar:
             selected_model = gemini_model_choice
 
     elif provider_choice == "OpenRouter":
-        api_key_input = st.text_input(
-            "OpenRouter API Key",
+        has_server_key = bool(env_openrouter)
+        if has_server_key:
+            st.success("🔒 Server API Key Active (Securely Loaded)")
+            key_placeholder = "Using server key (leave blank, or enter custom key)"
+            key_help = "A server key is securely loaded. Leave blank to use it, or enter your personal key to override."
+        else:
+            st.info("ℹ️ Enter your OpenRouter API key below to proceed.")
+            key_placeholder = "sk-or-..."
+            key_help = "Get your key at https://openrouter.ai/keys"
+
+        user_custom_key = st.text_input(
+            "OpenRouter API Key (Optional Override)" if has_server_key else "OpenRouter API Key",
             type="password",
-            value=env_openrouter,
-            placeholder="sk-or-...",
-            help="Get your key at https://openrouter.ai/keys"
+            value="",
+            placeholder=key_placeholder,
+            help=key_help
         )
+        api_key_input = user_custom_key.strip() if user_custom_key.strip() else env_openrouter
+
         openrouter_model_choice = st.selectbox(
             "OpenRouter Model",
             [
@@ -185,13 +222,25 @@ with st.sidebar:
             selected_model = openrouter_model_choice
 
     elif provider_choice == "OpenAI":
-        api_key_input = st.text_input(
-            "OpenAI API Key",
+        has_server_key = bool(env_openai)
+        if has_server_key:
+            st.success("🔒 Server API Key Active (Securely Loaded)")
+            key_placeholder = "Using server key (leave blank, or enter custom key)"
+            key_help = "A server key is securely loaded. Leave blank to use it, or enter your personal key to override."
+        else:
+            st.info("ℹ️ Enter your OpenAI API key below to proceed.")
+            key_placeholder = "sk-..."
+            key_help = "Get your key at https://platform.openai.com/api-keys"
+
+        user_custom_key = st.text_input(
+            "OpenAI API Key (Optional Override)" if has_server_key else "OpenAI API Key",
             type="password",
-            value=env_openai,
-            placeholder="sk-...",
-            help="Get your key at https://platform.openai.com/api-keys"
+            value="",
+            placeholder=key_placeholder,
+            help=key_help
         )
+        api_key_input = user_custom_key.strip() if user_custom_key.strip() else env_openai
+
         selected_model = st.selectbox("OpenAI Model", ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"], index=0)
 
     else:
@@ -201,6 +250,12 @@ with st.sidebar:
     # Status Indicator
     if api_key_input and len(api_key_input.strip()) > 8:
         st.success(f"Connected: {provider_choice} ({selected_model})")
+        if (provider_choice == "Google Gemini" and user_custom_key.strip()) or \
+           (provider_choice == "OpenRouter" and user_custom_key.strip()) or \
+           (provider_choice == "OpenAI" and user_custom_key.strip()):
+            st.caption("🔑 Using visitor custom API key override.")
+        else:
+            st.caption("🔒 Using server environment API key.")
     else:
         st.info("Offline Academic Engine (Local Mode)")
 
