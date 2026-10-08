@@ -356,11 +356,16 @@ div[data-testid="stRadio"] svg {
 }
 
 /* ==========================================================================
-   STATEFUL SEGMENTED NAVIGATION BAR (HIGH CONTRAST & THEME RESILIENT)
+   STATEFUL SEGMENTED NAVIGATION BAR (STREAMLIT 1.65 stButtonGroup SELECTORS)
    ========================================================================== */
+div[data-testid="stButtonGroup"],
+.stButtonGroup,
+.st-key-active_hub_tab_selector,
+div[data-testid="stButtonGroup"] > div,
+.stButtonGroup > div,
+.st-key-active_hub_tab_selector > div,
 div[data-testid="stSegmentedControl"],
 div[data-testid="stSegmentedControl"] > div,
-div[data-testid="stSegmentedControl"] [role="radiogroup"],
 [data-baseweb="segmented-control"] {
   background-color: #f1f5f9 !important;
   background: #f1f5f9 !important;
@@ -371,8 +376,12 @@ div[data-testid="stSegmentedControl"] [role="radiogroup"],
 }
 
 /* Default / Unselected Segmented Buttons */
+div[data-testid="stButtonGroup"] button,
+.stButtonGroup button,
+.st-key-active_hub_tab_selector button,
+button[data-variant="segmented_control"],
+button[kind="segmented_control"],
 div[data-testid="stSegmentedControl"] button,
-div[data-testid="stSegmentedControl"] [role="radiogroup"] button,
 [data-baseweb="segmented-control"] button {
   background-color: #ffffff !important;
   background: #ffffff !important;
@@ -385,34 +394,46 @@ div[data-testid="stSegmentedControl"] [role="radiogroup"] button,
   padding: 6px 14px !important;
   transition: all 0.15s ease-in-out !important;
   outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Hover state on unselected buttons */
-div[data-testid="stSegmentedControl"] button:hover,
-div[data-testid="stSegmentedControl"] [role="radiogroup"] button:hover,
-[data-baseweb="segmented-control"] button:hover {
+div[data-testid="stButtonGroup"] button:not([data-selected]):hover,
+.stButtonGroup button:not([data-selected]):hover,
+.st-key-active_hub_tab_selector button:not([data-selected]):hover,
+button[data-variant="segmented_control"]:not([data-selected]):hover,
+button[kind="segmented_control"]:not([data-selected]):hover {
   background-color: #e2e8f0 !important;
   border-color: #94a3b8 !important;
   color: #0f172a !important;
 }
 
 /* Text inside unselected buttons */
+div[data-testid="stButtonGroup"] button:not([data-selected]) *,
+.stButtonGroup button:not([data-selected]) *,
+.st-key-active_hub_tab_selector button:not([data-selected]) *,
+button[data-variant="segmented_control"]:not([data-selected]) *,
+button[kind="segmented_control"]:not([data-selected]) *,
 div[data-testid="stSegmentedControl"] button p,
 div[data-testid="stSegmentedControl"] button span,
-div[data-testid="stSegmentedControl"] button div,
-div[data-testid="stSegmentedControl"] button [data-testid="stMarkdownContainer"] p,
-[data-baseweb="segmented-control"] button p,
-[data-baseweb="segmented-control"] button span {
+[data-baseweb="segmented-control"] button p {
   color: #0f172a !important;
+  fill: #0f172a !important;
   font-weight: 600 !important;
 }
 
 /* Selected Button (Active state) */
+div[data-testid="stButtonGroup"] button[data-selected],
+.stButtonGroup button[data-selected],
+.st-key-active_hub_tab_selector button[data-selected],
+button[data-variant="segmented_control"][data-selected],
+button[kind="segmented_controlActive"],
+button[kind="segmented_control"][data-selected],
+div[data-testid="stButtonGroup"] button[aria-checked="true"],
+div[data-testid="stButtonGroup"] button[aria-selected="true"],
 div[data-testid="stSegmentedControl"] button[aria-checked="true"],
 div[data-testid="stSegmentedControl"] button[aria-selected="true"],
-div[data-testid="stSegmentedControl"] button[data-selected="true"],
-[data-baseweb="segmented-control"] button[aria-selected="true"],
-[data-baseweb="segmented-control"] button[aria-checked="true"] {
+[data-baseweb="segmented-control"] button[aria-selected="true"] {
   background-color: #0f172a !important;
   background: #0f172a !important;
   color: #ffffff !important;
@@ -421,26 +442,30 @@ div[data-testid="stSegmentedControl"] button[data-selected="true"],
 }
 
 /* Text inside selected button */
-div[data-testid="stSegmentedControl"] button[aria-checked="true"] p,
-div[data-testid="stSegmentedControl"] button[aria-checked="true"] span,
-div[data-testid="stSegmentedControl"] button[aria-checked="true"] div,
-div[data-testid="stSegmentedControl"] button[aria-checked="true"] [data-testid="stMarkdownContainer"] p,
-div[data-testid="stSegmentedControl"] button[aria-selected="true"] p,
-div[data-testid="stSegmentedControl"] button[aria-selected="true"] span,
-div[data-testid="stSegmentedControl"] button[aria-selected="true"] div,
-div[data-testid="stSegmentedControl"] button[aria-selected="true"] [data-testid="stMarkdownContainer"] p,
-[data-baseweb="segmented-control"] button[aria-selected="true"] p,
-[data-baseweb="segmented-control"] button[aria-selected="true"] span {
+div[data-testid="stButtonGroup"] button[data-selected] *,
+.stButtonGroup button[data-selected] *,
+.st-key-active_hub_tab_selector button[data-selected] *,
+button[data-variant="segmented_control"][data-selected] *,
+button[kind="segmented_controlActive"] *,
+div[data-testid="stButtonGroup"] button[aria-checked="true"] *,
+div[data-testid="stButtonGroup"] button[aria-selected="true"] *,
+div[data-testid="stSegmentedControl"] button[aria-checked="true"] *,
+div[data-testid="stSegmentedControl"] button[aria-selected="true"] *,
+[data-baseweb="segmented-control"] button[aria-selected="true"] * {
   color: #ffffff !important;
   fill: #ffffff !important;
   font-weight: 700 !important;
 }
 
-/* Prevent unwanted focus ring artifacts */
-div[data-testid="stSegmentedControl"] button:focus,
-div[data-testid="stSegmentedControl"] button:focus-visible {
+/* Prevent unwanted focus ring artifacts or red borders */
+div[data-testid="stButtonGroup"] button:focus,
+div[data-testid="stButtonGroup"] button:focus-visible,
+.stButtonGroup button:focus,
+.st-key-active_hub_tab_selector button:focus,
+button[data-variant="segmented_control"]:focus {
   outline: none !important;
   border-color: #0f172a !important;
+  box-shadow: none !important;
 }
 
 /* Streamlit Expanders */
@@ -502,9 +527,14 @@ code, pre, [data-testid="stCode"] {
   }
 
   /* Horizontal Scrollable Tabs Bar on Mobile (No wrapping or squishing) */
+  div[data-testid="stButtonGroup"],
+  .stButtonGroup,
+  .st-key-active_hub_tab_selector,
+  div[data-testid="stButtonGroup"] > div,
+  .stButtonGroup > div,
+  .st-key-active_hub_tab_selector > div,
   div[data-testid="stSegmentedControl"],
   div[data-testid="stSegmentedControl"] > div,
-  div[data-testid="stSegmentedControl"] [role="radiogroup"],
   [data-baseweb="segmented-control"] {
     display: flex !important;
     flex-direction: row !important;
@@ -517,6 +547,11 @@ code, pre, [data-testid="stCode"] {
     padding: 4px 2px !important;
   }
 
+  div[data-testid="stButtonGroup"] button,
+  .stButtonGroup button,
+  .st-key-active_hub_tab_selector button,
+  button[data-variant="segmented_control"],
+  button[kind="segmented_control"],
   div[data-testid="stSegmentedControl"] button,
   [data-baseweb="segmented-control"] button {
     flex: 0 0 auto !important;

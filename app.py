@@ -451,6 +451,80 @@ if st.session_state.study_content or st.session_state.assignment_content:
     if st.session_state.active_hub_tab not in tabs_to_show:
         st.session_state.active_hub_tab = tabs_to_show[0]
 
+    # Explicit scoped styling for segmented control buttons to guarantee 100% white theme contrast
+    st.markdown("""
+    <style>
+    .st-key-active_hub_tab_selector,
+    .st-key-active_hub_tab_selector > div,
+    div[data-testid="stButtonGroup"],
+    div[data-testid="stButtonGroup"] > div,
+    .stButtonGroup,
+    .stButtonGroup > div {
+        background-color: #f1f5f9 !important;
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        padding: 4px !important;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    }
+    .st-key-active_hub_tab_selector button,
+    div[data-testid="stButtonGroup"] button,
+    .stButtonGroup button,
+    button[data-variant="segmented_control"] {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        margin: 2px !important;
+        padding: 6px 14px !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+    .st-key-active_hub_tab_selector button *,
+    div[data-testid="stButtonGroup"] button:not([data-selected]) *,
+    button[data-variant="segmented_control"]:not([data-selected]) * {
+        color: #0f172a !important;
+        fill: #0f172a !important;
+        font-weight: 600 !important;
+    }
+    .st-key-active_hub_tab_selector button:not([data-selected]):hover,
+    div[data-testid="stButtonGroup"] button:not([data-selected]):hover,
+    button[data-variant="segmented_control"]:not([data-selected]):hover {
+        background-color: #e2e8f0 !important;
+        border-color: #94a3b8 !important;
+        color: #0f172a !important;
+    }
+    .st-key-active_hub_tab_selector button[data-selected],
+    div[data-testid="stButtonGroup"] button[data-selected],
+    button[data-variant="segmented_control"][data-selected],
+    button[kind="segmented_controlActive"] {
+        background-color: #0f172a !important;
+        background: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #0f172a !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25) !important;
+    }
+    .st-key-active_hub_tab_selector button[data-selected] *,
+    div[data-testid="stButtonGroup"] button[data-selected] *,
+    button[data-variant="segmented_control"][data-selected] *,
+    button[kind="segmented_controlActive"] * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+        font-weight: 700 !important;
+    }
+    .st-key-active_hub_tab_selector button:focus,
+    .st-key-active_hub_tab_selector button:focus-visible,
+    div[data-testid="stButtonGroup"] button:focus,
+    button[data-variant="segmented_control"]:focus {
+        outline: none !important;
+        border-color: #0f172a !important;
+        box-shadow: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     current_tab = st.segmented_control(
         "Academic Navigation:",
         tabs_to_show,
