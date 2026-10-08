@@ -48,63 +48,27 @@ header[data-testid="stHeader"] {
   color: #0f172a !important;
 }
 
-/* All Headings, Labels, Text, Markdown */
-h1, h2, h3, h4, h5, h6, p, span, label, 
-[data-testid="stMarkdownContainer"] p, 
-[data-testid="stMarkdownContainer"] span, 
+/* All Headings, Labels, Text, Markdown (EXCEPT inside primary buttons) */
+h1, h2, h3, h4, h5, h6, 
+p:not(button[kind="primary"] *), 
+span:not(button[kind="primary"] *), 
+label:not(button[kind="primary"] *), 
+[data-testid="stMarkdownContainer"] p:not(button[kind="primary"] *), 
+[data-testid="stMarkdownContainer"] span:not(button[kind="primary"] *), 
 [data-testid="stMarkdownContainer"] li,
 [data-testid="stWidgetLabel"] p, 
 [data-testid="stWidgetLabel"] label {
   color: #0f172a !important;
 }
 
-/* Force All Form Inputs to Clean White with Slate Borders */
-input, textarea, 
-[data-baseweb="input"], 
-[data-baseweb="input"] > div, 
-[data-baseweb="textarea"], 
-[data-baseweb="base-input"] {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 6px !important;
-}
-
-input:focus, textarea:focus, [data-baseweb="input"]:focus-within {
-  border-color: #0f172a !important;
-  box-shadow: 0 0 0 1px #0f172a !important;
-}
-
-/* Selectboxes & Dropdowns */
-[data-baseweb="select"], 
-[data-baseweb="select"] > div {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 6px !important;
-}
-
-ul[role="listbox"], li[role="option"] {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-}
-li[role="option"]:hover {
-  background-color: #f1f5f9 !important;
-}
-
-/* Radio buttons & Checkboxes */
-[data-testid="stRadio"] label, 
-[data-testid="stCheckbox"] label {
-  color: #0f172a !important;
-}
-
-/* Primary Button Styling */
+/* Primary Button Styling — FORCED CRISP WHITE TEXT ON DARK SLATE */
 button[kind="primary"] {
   background-color: #0f172a !important;
   color: #ffffff !important;
   border: 1px solid #0f172a !important;
   border-radius: 6px !important;
   font-weight: 600 !important;
+  padding: 0.6rem 1.25rem !important;
 }
 
 button[kind="primary"]:hover {
@@ -113,6 +77,17 @@ button[kind="primary"]:hover {
   color: #ffffff !important;
 }
 
+button[kind="primary"] p,
+button[kind="primary"] span,
+button[kind="primary"] div,
+button[kind="primary"] [data-testid="stMarkdownContainer"],
+button[kind="primary"] [data-testid="stMarkdownContainer"] p {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* Secondary Button Styling */
 button[kind="secondary"] {
   background-color: #ffffff !important;
   color: #0f172a !important;
@@ -124,6 +99,110 @@ button[kind="secondary"] {
 button[kind="secondary"]:hover {
   background-color: #f8fafc !important;
   border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+button[kind="secondary"] p,
+button[kind="secondary"] span,
+button[kind="secondary"] div,
+button[kind="secondary"] [data-testid="stMarkdownContainer"] p {
+  color: #0f172a !important;
+}
+
+/* Force All Form Inputs to Clean White with Slate Borders */
+input, textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+}
+
+div[data-baseweb="base-input"] {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+}
+
+div[data-baseweb="input"] {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+}
+
+div[data-baseweb="input"] > div,
+div[data-baseweb="input"] button {
+  background-color: transparent !important;
+}
+
+div[data-baseweb="input"] svg {
+  fill: #64748b !important;
+  color: #64748b !important;
+}
+
+input:focus, textarea:focus, div[data-baseweb="input"]:focus-within {
+  border-color: #0f172a !important;
+  box-shadow: 0 0 0 1px #0f172a !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Fix Dropdown / Selectbox: Remove Dark Chevron Containers */
+div[data-baseweb="select"] {
+  background-color: #ffffff !important;
+}
+
+div[data-baseweb="select"] > div {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+}
+
+div[data-baseweb="select"] div {
+  background-color: transparent !important;
+  color: #0f172a !important;
+}
+
+div[data-baseweb="select"] svg {
+  fill: #475569 !important;
+  color: #475569 !important;
+}
+
+div[data-baseweb="select"] span {
+  color: #0f172a !important;
+}
+
+/* Selectbox Dropdown Menu Popover */
+ul[role="listbox"], li[role="option"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+li[role="option"]:hover, li[role="option"][aria-selected="true"] {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Radio buttons & Checkboxes High Contrast */
+div[data-testid="stRadio"] label, 
+div[data-testid="stCheckbox"] label,
+div[data-testid="stRadio"] p,
+div[data-testid="stCheckbox"] p {
+  color: #0f172a !important;
+  font-weight: 500 !important;
+}
+
+div[data-testid="stCheckbox"] input + div,
+div[data-testid="stRadio"] input + div {
+  background-color: #ffffff !important;
+  border: 1px solid #94a3b8 !important;
+}
+
+div[data-testid="stCheckbox"] svg,
+div[data-testid="stRadio"] svg {
+  fill: #0f172a !important;
 }
 
 /* Institutional Clean Header */
@@ -296,23 +375,9 @@ button[kind="secondary"]:hover {
   font-weight: 600 !important;
 }
 
-/* Streamlit Native Tabs */
-.stTabs [data-baseweb="tab-list"] {
-  gap: 8px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.stTabs [data-baseweb="tab"] {
-  font-size: 0.92rem;
-  font-weight: 500;
-  color: #64748b;
-  padding: 8px 14px;
-}
-
-.stTabs [aria-selected="true"] {
-  color: #0f172a !important;
-  font-weight: 600 !important;
-  border-bottom-color: #0f172a !important;
+[data-baseweb="segmented-control"] button[aria-selected="true"] p,
+[data-baseweb="segmented-control"] button[aria-selected="true"] span {
+  color: #ffffff !important;
 }
 
 /* Streamlit Expanders */

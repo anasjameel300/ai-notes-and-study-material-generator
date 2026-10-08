@@ -39,11 +39,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Load Custom CSS
+# Load Custom CSS & Enforce Light Theme
 css_file = os.path.join(os.path.dirname(__file__), "static", "style.css")
 if os.path.exists(css_file):
     with open(css_file, "r") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+st.markdown(
+    """
+    <script>
+    try {
+        window.localStorage.setItem('stActiveTheme', 'light');
+        if (window.parent && window.parent.localStorage) {
+            window.parent.localStorage.setItem('stActiveTheme', 'light');
+        }
+    } catch(e) {}
+    </script>
+    """,
+    unsafe_allow_html=True
+)
 
 # Session State Initialization
 if "study_content" not in st.session_state:
