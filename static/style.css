@@ -1,8 +1,9 @@
-/* Academic Curriculum & Assessment Suite — Minimalist White Academic Theme */
+/* Academic Curriculum & Assessment Suite — Strict Minimalist White Theme */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
+  color-scheme: light !important;
   --primary: #0f172a;
   --primary-hover: #1e293b;
   --bg-page: #ffffff;
@@ -14,10 +15,115 @@
   --text-light: #475569;
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: var(--text-main);
-  background-color: var(--bg-page);
+/* ==========================================================================
+   FORCE 100% PURE WHITE THEME (OVERRIDE ANY STREAMLIT / BROWSER DARK MODE)
+   ========================================================================== */
+html, body, .stApp, 
+[data-testid="stAppViewContainer"], 
+[data-testid="stHeader"], 
+[data-testid="stToolbar"], 
+.main, section.main, 
+[data-testid="stMain"], 
+[data-testid="stMainBlockContainer"], 
+[data-testid="stBottom"],
+div[data-testid="stVerticalBlock"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* Top Streamlit Header */
+header[data-testid="stHeader"] {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* Sidebar Forced Light Theme */
+[data-testid="stSidebar"], 
+[data-testid="stSidebar"] > div:first-child, 
+[data-testid="stSidebarContent"],
+[data-testid="stSidebarUserContent"] {
+  background-color: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* All Headings, Labels, Text, Markdown */
+h1, h2, h3, h4, h5, h6, p, span, label, 
+[data-testid="stMarkdownContainer"] p, 
+[data-testid="stMarkdownContainer"] span, 
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stWidgetLabel"] p, 
+[data-testid="stWidgetLabel"] label {
+  color: #0f172a !important;
+}
+
+/* Force All Form Inputs to Clean White with Slate Borders */
+input, textarea, 
+[data-baseweb="input"], 
+[data-baseweb="input"] > div, 
+[data-baseweb="textarea"], 
+[data-baseweb="base-input"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+}
+
+input:focus, textarea:focus, [data-baseweb="input"]:focus-within {
+  border-color: #0f172a !important;
+  box-shadow: 0 0 0 1px #0f172a !important;
+}
+
+/* Selectboxes & Dropdowns */
+[data-baseweb="select"], 
+[data-baseweb="select"] > div {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+}
+
+ul[role="listbox"], li[role="option"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+li[role="option"]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Radio buttons & Checkboxes */
+[data-testid="stRadio"] label, 
+[data-testid="stCheckbox"] label {
+  color: #0f172a !important;
+}
+
+/* Primary Button Styling */
+button[kind="primary"] {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid #0f172a !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+}
+
+button[kind="primary"]:hover {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+button[kind="secondary"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+}
+
+button[kind="secondary"]:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
 }
 
 /* Institutional Clean Header */
@@ -170,27 +276,27 @@ body {
   font-size: 0.85rem;
 }
 
-/* Sidebar Styling */
-[data-testid="stSidebar"] {
-  background-color: #fafafa;
-  border-right: 1px solid #f1f5f9;
+/* Stateful Segmented Navigation Bar */
+[data-baseweb="segmented-control"] {
+  background-color: #f1f5f9 !important;
+  padding: 4px !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
-/* Primary Button Styling */
-button[kind="primary"] {
+[data-baseweb="segmented-control"] button {
+  color: #475569 !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+}
+
+[data-baseweb="segmented-control"] button[aria-selected="true"] {
   background-color: #0f172a !important;
   color: #ffffff !important;
-  border: 1px solid #0f172a !important;
-  border-radius: 6px !important;
   font-weight: 600 !important;
 }
 
-button[kind="primary"]:hover {
-  background-color: #1e293b !important;
-  border-color: #1e293b !important;
-}
-
-/* Tab Headers */
+/* Streamlit Native Tabs */
 .stTabs [data-baseweb="tab-list"] {
   gap: 8px;
   border-bottom: 1px solid #e2e8f0;
@@ -207,4 +313,31 @@ button[kind="primary"]:hover {
   color: #0f172a !important;
   font-weight: 600 !important;
   border-bottom-color: #0f172a !important;
+}
+
+/* Streamlit Expanders */
+[data-testid="stExpander"], 
+div[data-testid="stExpander"] details {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+}
+
+div[data-testid="stExpander"] summary {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+}
+
+/* Code blocks */
+code, pre, [data-testid="stCode"] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Metrics */
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+  color: #0f172a !important;
 }

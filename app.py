@@ -76,6 +76,8 @@ if "timer_remaining_sec" not in st.session_state:
     st.session_state.timer_remaining_sec = 30 * 60
 if "timer_last_start_time" not in st.session_state:
     st.session_state.timer_last_start_time = None
+if "active_hub_tab" not in st.session_state:
+    st.session_state.active_hub_tab = "📖 Lecture Notes"
 
 # Preset Data Map
 PRESET_DATA = {
@@ -284,6 +286,7 @@ if generate_button:
     st.session_state.timer_status = "idle"
     st.session_state.timer_remaining_sec = st.session_state.quiz_duration_mins * 60
     st.session_state.timer_last_start_time = None
+    st.session_state.active_hub_tab = "📖 Lecture Notes"
 
     selected_depth = "High-Yield" if "High-Yield" in depth_choice else "Comprehensive"
 
@@ -367,446 +370,437 @@ if st.session_state.study_content or st.session_state.assignment_content:
 
     tabs_to_show = []
     if st.session_state.study_content:
-        tabs_to_show.append("Lecture Notes")
-        tabs_to_show.append("Concept Mind Map")
-        tabs_to_show.append("Study Flashcards")
+        tabs_to_show.append("📖 Lecture Notes")
+        tabs_to_show.append("🧠 Concept Mind Map")
+        tabs_to_show.append("🗂️ Study Flashcards")
     if st.session_state.assignment_content:
-        tabs_to_show.append("Assignment & Question Bank")
-        tabs_to_show.append("Timed Examination (30 Min)")
+        tabs_to_show.append("📝 Assignment & Question Bank")
+        tabs_to_show.append("⏱️ Timed Examination (30 Min)")
     if st.session_state.naive_content:
         tabs_to_show.append("🔬 Prompt Engineering Comparison")
 
-    rendered_tabs = st.tabs(tabs_to_show)
-    tab_index = 0
+    if st.session_state.active_hub_tab not in tabs_to_show:
+        st.session_state.active_hub_tab = tabs_to_show[0]
 
-    # TAB: Study Material
-    if st.session_state.study_content and "Lecture Notes" in tabs_to_show:
-        with rendered_tabs[tab_index]:
-            c_head1, c_head2 = st.columns([3, 1])
-            with c_head1:
-                st.markdown(f"#### 📖 Lecture Notes & Core Theory: {st.session_state.active_unit}")
-                st.caption(f"Course: {st.session_state.active_topic} | Level: {st.session_state.active_level}")
-            with c_head2:
-                st.download_button(
-                    label="📥 Download Study Notes (.md)",
-                    data=st.session_state.study_content,
-                    file_name=f"{st.session_state.active_topic}_{st.session_state.active_unit}_StudyNotes.md",
-                    mime="text/markdown",
-                    use_container_width=True
-                )
-            
-            st.markdown(st.session_state.study_content)
-        tab_index += 1
+    current_tab = st.segmented_control(
+        "Academic Navigation:",
+        tabs_to_show,
+        default=st.session_state.active_hub_tab,
+        key="active_hub_tab_selector",
+        label_visibility="collapsed"
+    ) or st.session_state.active_hub_tab
+    st.session_state.active_hub_tab = current_tab
 
-    # TAB: Mind Tree (Concept Map)
-    if st.session_state.study_content and "Concept Mind Map" in tabs_to_show:
-        with rendered_tabs[tab_index]:
-            st.markdown(f"#### Concept Mind Map: {st.session_state.active_unit}")
-            st.caption(f"Hierarchical concept map for {st.session_state.active_topic}.")
-            
-            mermaid_diagram = generate_mind_tree_mermaid(
-                st.session_state.active_topic,
-                st.session_state.active_unit
+    # 1. VIEW: Study Material
+    if current_tab == "📖 Lecture Notes" and st.session_state.study_content:
+        c_head1, c_head2 = st.columns([3, 1])
+        with c_head1:
+            st.markdown(f"#### 📖 Lecture Notes & Core Theory: {st.session_state.active_unit}")
+            st.caption(f"Course: {st.session_state.active_topic} | Level: {st.session_state.active_level}")
+        with c_head2:
+            st.download_button(
+                label="📥 Download Study Notes (.md)",
+                data=st.session_state.study_content,
+                file_name=f"{st.session_state.active_topic}_{st.session_state.active_unit}_StudyNotes.md",
+                mime="text/markdown",
+                use_container_width=True
             )
+        st.markdown(st.session_state.study_content)
 
-            st.markdown(f"```mermaid\n{mermaid_diagram}\n```")
-            
-            with st.expander("View Diagram Code", expanded=False):
-                st.code(mermaid_diagram, language="mermaid")
-        tab_index += 1
+    # 2. VIEW: Mind Tree (Concept Map)
+    elif current_tab == "🧠 Concept Mind Map" and st.session_state.study_content:
+        st.markdown(f"#### Concept Mind Map: {st.session_state.active_unit}")
+        st.caption(f"Hierarchical concept map for {st.session_state.active_topic}.")
+        
+        mermaid_diagram = generate_mind_tree_mermaid(
+            st.session_state.active_topic,
+            st.session_state.active_unit
+        )
 
-    # TAB: Interactive Flashcards
-    if st.session_state.study_content and "Study Flashcards" in tabs_to_show:
-        with rendered_tabs[tab_index]:
-            st.markdown(f"#### Study Flashcards: {st.session_state.active_unit}")
-            st.caption("Review definitions and key mechanisms.")
+        st.markdown(f"```mermaid\n{mermaid_diagram}\n```")
+        
+        with st.expander("View Diagram Code", expanded=False):
+            st.code(mermaid_diagram, language="mermaid")
 
-            cards = extract_flashcards_from_study_material(
-                st.session_state.study_content,
-                st.session_state.active_unit
-            )
+    # 3. VIEW: Interactive Flashcards
+    elif current_tab == "🗂️ Study Flashcards" and st.session_state.study_content:
+        st.markdown(f"#### Study Flashcards: {st.session_state.active_unit}")
+        st.caption("Review definitions and key mechanisms.")
 
-            total_cards = len(cards)
-            current_card_idx = st.session_state.flashcard_idx % total_cards
-            active_card = cards[current_card_idx]
+        cards = extract_flashcards_from_study_material(
+            st.session_state.study_content,
+            st.session_state.active_unit
+        )
 
-            st.markdown(f"**Card {current_card_idx + 1} of {total_cards}**")
-            st.progress((current_card_idx + 1) / total_cards)
+        total_cards = len(cards)
+        current_card_idx = st.session_state.flashcard_idx % total_cards
+        active_card = cards[current_card_idx]
 
-            card_html = f"""
-            <div class="flashcard-box">
-                <div class="flashcard-badge">{active_card.get('category', 'Concept')}</div>
-                <div class="flashcard-content">{active_card['front']}</div>
+        st.markdown(f"**Card {current_card_idx + 1} of {total_cards}**")
+        st.progress((current_card_idx + 1) / total_cards)
+
+        card_html = f"""
+        <div class="flashcard-box">
+            <div class="flashcard-badge">{active_card.get('category', 'Concept')}</div>
+            <div class="flashcard-content">{active_card['front']}</div>
+        </div>
+        """
+        st.markdown(card_html, unsafe_allow_html=True)
+
+        fc_col1, fc_col2, fc_col3 = st.columns([1, 1, 1])
+        with fc_col1:
+            if st.button("Previous Card", use_container_width=True):
+                st.session_state.flashcard_idx = (st.session_state.flashcard_idx - 1) % total_cards
+                st.session_state.flashcard_flipped = False
+                st.rerun()
+
+        with fc_col2:
+            flip_label = "Hide Answer" if st.session_state.flashcard_flipped else "Show Answer"
+            if st.button(flip_label, type="primary", use_container_width=True):
+                st.session_state.flashcard_flipped = not st.session_state.flashcard_flipped
+                st.rerun()
+
+        with fc_col3:
+            if st.button("Next Card", use_container_width=True):
+                st.session_state.flashcard_idx = (st.session_state.flashcard_idx + 1) % total_cards
+                st.session_state.flashcard_flipped = False
+                st.rerun()
+
+        if st.session_state.flashcard_flipped:
+            st.markdown(f"""
+            <div class="flashcard-answer">
+                <strong>Answer / Key Concept:</strong><br>
+                {active_card['back']}
             </div>
-            """
-            st.markdown(card_html, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-            fc_col1, fc_col2, fc_col3 = st.columns([1, 1, 1])
-            with fc_col1:
-                if st.button("Previous Card", use_container_width=True):
-                    st.session_state.flashcard_idx = (st.session_state.flashcard_idx - 1) % total_cards
-                    st.session_state.flashcard_flipped = False
-                    st.rerun()
+    # 4. VIEW: Assignment Sheet (With On-Demand Show Answer)
+    elif current_tab == "📝 Assignment & Question Bank" and st.session_state.assignment_content:
+        c_as1, c_as2, c_as3 = st.columns([2, 1, 1])
+        with c_as1:
+            st.markdown(f"#### Assignment Paper: {st.session_state.active_unit}")
+            st.caption("Click 'Show Answer' under any question to inspect solutions and rubrics.")
+        with c_as2:
+            import re
+            clean_student_sheet = re.sub(r"\*\*Correct Answer\*\*:[^\n]*\n", "", st.session_state.assignment_content)
+            clean_student_sheet = re.sub(r"\*\*Explanation\*\*:[^\n]*\n", "", clean_student_sheet)
+            clean_student_sheet = re.sub(r"-\s*\*\*Model Answer Outline[^\n]*\n(?:[ \t]*-[^\n]*\n)*", "", clean_student_sheet)
+            clean_student_sheet = re.sub(r"-\s*\*\*Detailed Solution Blueprint[^\n]*\n(?:[ \t]*-[^\n]*\n)*", "", clean_student_sheet)
+            st.download_button(
+                label="Download Questions (.md)",
+                data=clean_student_sheet,
+                file_name=f"{st.session_state.active_topic}_{st.session_state.active_unit}_Questions.md",
+                mime="text/markdown",
+                use_container_width=True
+            )
+        with c_as3:
+            st.download_button(
+                label="Download Solutions (.md)",
+                data=st.session_state.assignment_content,
+                file_name=f"{st.session_state.active_topic}_{st.session_state.active_unit}_Full_Solutions.md",
+                mime="text/markdown",
+                use_container_width=True
+            )
 
-            with fc_col2:
-                flip_label = "Hide Answer" if st.session_state.flashcard_flipped else "Show Answer"
-                if st.button(flip_label, type="primary", use_container_width=True):
-                    st.session_state.flashcard_flipped = not st.session_state.flashcard_flipped
-                    st.rerun()
+        st.markdown("---")
 
-            with fc_col3:
-                if st.button("Next Card", use_container_width=True):
-                    st.session_state.flashcard_idx = (st.session_state.flashcard_idx + 1) % total_cards
-                    st.session_state.flashcard_flipped = False
-                    st.rerun()
+        # SECTION A: MCQs with Show Answer
+        parsed_mcqs = parse_mcqs(st.session_state.assignment_content)
+        st.markdown("### SECTION A: Multiple Choice Questions")
+        for mcq in parsed_mcqs:
+            q_num = mcq["number"]
+            st.markdown(f"""
+            <div class="question-container">
+                <strong>Q{q_num}. {mcq['stem']}</strong><br><br>
+                A) {mcq['options']['A']}<br>
+                B) {mcq['options']['B']}<br>
+                C) {mcq['options']['C']}<br>
+                D) {mcq['options']['D']}
+            </div>
+            """, unsafe_allow_html=True)
 
-            if st.session_state.flashcard_flipped:
-                st.markdown(f"""
-                <div class="flashcard-answer">
-                    <strong>Answer / Key Concept:</strong><br>
-                    {active_card['back']}
-                </div>
-                """, unsafe_allow_html=True)
-        tab_index += 1
+            with st.expander(f"Show Answer & Explanation (Q{q_num})", expanded=False):
+                st.markdown(f"**Correct Answer:** Option **{mcq['correct_answer']}**")
+                if mcq["explanation"]:
+                    st.markdown(f"**Explanation:** {mcq['explanation']}")
+                st.caption(f"Cognitive Level: {mcq.get('bloom_level', 'Understand')}")
 
-    # TAB: Assignment Sheet (With On-Demand Show Answer)
-    if st.session_state.assignment_content and "Assignment & Question Bank" in tabs_to_show:
-        with rendered_tabs[tab_index]:
-            c_as1, c_as2, c_as3 = st.columns([2, 1, 1])
-            with c_as1:
-                st.markdown(f"#### Assignment Paper: {st.session_state.active_unit}")
-                st.caption("Click 'Show Answer' under any question to inspect solutions and rubrics.")
-            with c_as2:
-                import re
-                clean_student_sheet = re.sub(r"\*\*Correct Answer\*\*:[^\n]*\n", "", st.session_state.assignment_content)
-                clean_student_sheet = re.sub(r"\*\*Explanation\*\*:[^\n]*\n", "", clean_student_sheet)
-                clean_student_sheet = re.sub(r"-\s*\*\*Model Answer Outline[^\n]*\n(?:[ \t]*-[^\n]*\n)*", "", clean_student_sheet)
-                clean_student_sheet = re.sub(r"-\s*\*\*Detailed Solution Blueprint[^\n]*\n(?:[ \t]*-[^\n]*\n)*", "", clean_student_sheet)
-                st.download_button(
-                    label="Download Questions (.md)",
-                    data=clean_student_sheet,
-                    file_name=f"{st.session_state.active_topic}_{st.session_state.active_unit}_Questions.md",
-                    mime="text/markdown",
-                    use_container_width=True
+        st.markdown("---")
+
+        # SECTION B: Short-Answer with Show Answer
+        short_qs = parse_short_questions(st.session_state.assignment_content)
+        st.markdown("### SECTION B: Short-Answer Conceptual Questions (3-5 Marks Each)")
+        if short_qs:
+            for sq in short_qs:
+                s_num = sq["number"]
+                st.markdown(f"**Question {s_num}** <span class='marks-badge'>[{sq['marks']} Marks]</span>", unsafe_allow_html=True)
+                st.markdown(f"> {sq['question']}")
+                
+                with st.expander(f"Show Model Answer (Question {s_num})", expanded=False):
+                    if sq["answer"]:
+                        st.markdown(sq["answer"])
+                    else:
+                        st.info("Model answer outline is available in the downloadable full solutions sheet.")
+                st.markdown("<br>", unsafe_allow_html=True)
+        else:
+            st.info("Section B questions available in the downloadable full solutions sheet.")
+
+        st.markdown("---")
+
+        # SECTION C: Long-Answer with Show Rubric
+        long_qs = parse_long_questions(st.session_state.assignment_content)
+        st.markdown("### SECTION C: University Long-Answer & Design Questions (10-15 Marks Each)")
+        if long_qs:
+            for lq in long_qs:
+                l_num = lq["number"]
+                st.markdown(f"**Question {l_num}** <span class='marks-badge'>[{lq['marks']} Marks]</span>", unsafe_allow_html=True)
+                st.markdown(f"> {lq['question']}")
+                
+                with st.expander(f"Show Evaluation Rubric (Question {l_num})", expanded=False):
+                    if lq["rubric"]:
+                        st.markdown(lq["rubric"])
+                    else:
+                        st.info("Evaluation rubric is available in the downloadable full solutions sheet.")
+                st.markdown("<br>", unsafe_allow_html=True)
+        else:
+            st.info("Section C long-answer questions available in the downloadable full solutions sheet.")
+
+    # 5. VIEW: Practice Quiz (Exam Mode with Timer)
+    elif current_tab == "⏱️ Timed Examination (30 Min)" and st.session_state.assignment_content:
+        st.markdown(f"#### Timed Examination: {st.session_state.active_unit}")
+        st.caption("Answers are hidden during the test and will be evaluated upon submission.")
+
+        parsed_mcqs = parse_mcqs(st.session_state.assignment_content)
+        if not parsed_mcqs:
+            st.info("No parsed MCQs available in this question bank.")
+        else:
+            total_mcqs = len(parsed_mcqs)
+
+            t_col1, t_col2 = st.columns([1, 2])
+            with t_col1:
+                avail_mins = [15, 30, 45, 60]
+                curr_idx = avail_mins.index(st.session_state.quiz_duration_mins) if st.session_state.quiz_duration_mins in avail_mins else 1
+                timer_mins = st.selectbox(
+                    "Set Exam Duration:",
+                    avail_mins,
+                    index=curr_idx,
+                    disabled=(st.session_state.timer_status == "running"),
+                    help="Choose exam duration. Can be changed when timer is not running."
                 )
-            with c_as3:
-                st.download_button(
-                    label="Download Solutions (.md)",
-                    data=st.session_state.assignment_content,
-                    file_name=f"{st.session_state.active_topic}_{st.session_state.active_unit}_Full_Solutions.md",
-                    mime="text/markdown",
-                    use_container_width=True
-                )
+                if timer_mins != st.session_state.quiz_duration_mins:
+                    st.session_state.quiz_duration_mins = timer_mins
+                    if st.session_state.timer_status == "idle":
+                        st.session_state.timer_remaining_sec = timer_mins * 60
 
-            st.markdown("---")
-
-            # SECTION A: MCQs with Show Answer
-            parsed_mcqs = parse_mcqs(st.session_state.assignment_content)
-            st.markdown("### SECTION A: Multiple Choice Questions")
-            for mcq in parsed_mcqs:
-                q_num = mcq["number"]
-                st.markdown(f"""
-                <div class="question-container">
-                    <strong>Q{q_num}. {mcq['stem']}</strong><br><br>
-                    A) {mcq['options']['A']}<br>
-                    B) {mcq['options']['B']}<br>
-                    C) {mcq['options']['C']}<br>
-                    D) {mcq['options']['D']}
-                </div>
-                """, unsafe_allow_html=True)
-
-                with st.expander(f"Show Answer & Explanation (Q{q_num})", expanded=False):
-                    st.markdown(f"**Correct Answer:** Option **{mcq['correct_answer']}**")
-                    if mcq["explanation"]:
-                        st.markdown(f"**Explanation:** {mcq['explanation']}")
-                    st.caption(f"Cognitive Level: {mcq.get('bloom_level', 'Understand')}")
-
-            st.markdown("---")
-
-            # SECTION B: Short-Answer with Show Answer
-            short_qs = parse_short_questions(st.session_state.assignment_content)
-            st.markdown("### SECTION B: Short-Answer Conceptual Questions (3-5 Marks Each)")
-            if short_qs:
-                for sq in short_qs:
-                    s_num = sq["number"]
-                    st.markdown(f"**Question {s_num}** <span class='marks-badge'>[{sq['marks']} Marks]</span>", unsafe_allow_html=True)
-                    st.markdown(f"> {sq['question']}")
-                    
-                    with st.expander(f"Show Model Answer (Question {s_num})", expanded=False):
-                        if sq["answer"]:
-                            st.markdown(sq["answer"])
-                        else:
-                            st.info("Model answer outline is available in the downloadable full solutions sheet.")
-                    st.markdown("<br>", unsafe_allow_html=True)
-            else:
-                st.info("Section B questions available in the downloadable full solutions sheet.")
-
-            st.markdown("---")
-
-            # SECTION C: Long-Answer with Show Rubric
-            long_qs = parse_long_questions(st.session_state.assignment_content)
-            st.markdown("### SECTION C: University Long-Answer & Design Questions (10-15 Marks Each)")
-            if long_qs:
-                for lq in long_qs:
-                    l_num = lq["number"]
-                    st.markdown(f"**Question {l_num}** <span class='marks-badge'>[{lq['marks']} Marks]</span>", unsafe_allow_html=True)
-                    st.markdown(f"> {lq['question']}")
-                    
-                    with st.expander(f"Show Evaluation Rubric (Question {l_num})", expanded=False):
-                        if lq["rubric"]:
-                            st.markdown(lq["rubric"])
-                        else:
-                            st.info("Evaluation rubric is available in the downloadable full solutions sheet.")
-                    st.markdown("<br>", unsafe_allow_html=True)
-            else:
-                st.info("Section C long-answer questions available in the downloadable full solutions sheet.")
-        tab_index += 1
-
-    # TAB: Practice Quiz (Exam Mode with 30-Minute Timer)
-    if st.session_state.assignment_content and "Timed Examination (30 Min)" in tabs_to_show:
-        with rendered_tabs[tab_index]:
-            st.markdown(f"#### Timed Examination: {st.session_state.active_unit}")
-            st.caption("Answers are hidden during the test and will be evaluated upon submission.")
-
-            parsed_mcqs = parse_mcqs(st.session_state.assignment_content)
-            if not parsed_mcqs:
-                st.info("No parsed MCQs available in this question bank.")
-            else:
-                total_mcqs = len(parsed_mcqs)
-
-                t_col1, t_col2 = st.columns([1, 2])
-                with t_col1:
-                    avail_mins = [15, 30, 45, 60]
-                    curr_idx = avail_mins.index(st.session_state.quiz_duration_mins) if st.session_state.quiz_duration_mins in avail_mins else 1
-                    timer_mins = st.selectbox(
-                        "Set Exam Duration:",
-                        avail_mins,
-                        index=curr_idx,
-                        disabled=(st.session_state.timer_status == "running"),
-                        help="Choose exam duration. Can be changed when timer is not running."
-                    )
-                    if timer_mins != st.session_state.quiz_duration_mins:
-                        st.session_state.quiz_duration_mins = timer_mins
-                        if st.session_state.timer_status == "idle":
-                            st.session_state.timer_remaining_sec = timer_mins * 60
-
-                    btn_c1, btn_c2 = st.columns(2)
-                    with btn_c1:
-                        if st.session_state.timer_status == "idle":
-                            if st.button("▶️ Start", use_container_width=True, type="primary"):
-                                st.session_state.timer_status = "running"
-                                st.session_state.timer_last_start_time = time.time()
-                                st.rerun()
-                        elif st.session_state.timer_status == "running":
-                            if st.button("⏸️ Pause", use_container_width=True):
-                                now = time.time()
-                                elapsed = int(now - (st.session_state.timer_last_start_time or now))
-                                st.session_state.timer_remaining_sec = max(0, st.session_state.timer_remaining_sec - elapsed)
-                                st.session_state.timer_status = "paused"
-                                st.session_state.timer_last_start_time = None
-                                st.rerun()
-                        elif st.session_state.timer_status == "paused":
-                            if st.button("▶️ Resume", use_container_width=True, type="primary"):
-                                st.session_state.timer_status = "running"
-                                st.session_state.timer_last_start_time = time.time()
-                                st.rerun()
-
-                    with btn_c2:
-                        if st.button("🔄 Reset", use_container_width=True):
-                            st.session_state.timer_status = "idle"
-                            st.session_state.timer_remaining_sec = st.session_state.quiz_duration_mins * 60
+                btn_c1, btn_c2 = st.columns(2)
+                with btn_c1:
+                    if st.session_state.timer_status == "idle":
+                        if st.button("▶️ Start", use_container_width=True, type="primary"):
+                            st.session_state.timer_status = "running"
+                            st.session_state.timer_last_start_time = time.time()
+                            st.rerun()
+                    elif st.session_state.timer_status == "running":
+                        if st.button("⏸️ Pause", use_container_width=True):
+                            now = time.time()
+                            elapsed = int(now - (st.session_state.timer_last_start_time or now))
+                            st.session_state.timer_remaining_sec = max(0, st.session_state.timer_remaining_sec - elapsed)
+                            st.session_state.timer_status = "paused"
                             st.session_state.timer_last_start_time = None
                             st.rerun()
-
-                with t_col2:
-                    # Calculate active remaining seconds
-                    if st.session_state.timer_status == "running":
-                        now = time.time()
-                        elapsed = int(now - (st.session_state.timer_last_start_time or now))
-                        current_remaining = max(0, st.session_state.timer_remaining_sec - elapsed)
-                        status_badge = '<span style="color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">● RUNNING</span>'
-                        auto_tick = True
                     elif st.session_state.timer_status == "paused":
-                        current_remaining = st.session_state.timer_remaining_sec
-                        status_badge = '<span style="color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">❚❚ PAUSED</span>'
-                        auto_tick = False
-                    else:  # idle
-                        current_remaining = st.session_state.timer_remaining_sec
-                        status_badge = '<span style="color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">○ NOT STARTED</span>'
-                        auto_tick = False
+                        if st.button("▶️ Resume", use_container_width=True, type="primary"):
+                            st.session_state.timer_status = "running"
+                            st.session_state.timer_last_start_time = time.time()
+                            st.rerun()
 
-                    rem_mins = current_remaining // 60
-                    rem_secs = current_remaining % 60
-
-                    timer_js_tick = f"""
-                        var secondsLeft = {current_remaining};
-                        var clock = document.getElementById('countdown_clock');
-                        if (clock && secondsLeft > 0) {{
-                            var interval = setInterval(function() {{
-                                secondsLeft--;
-                                if (secondsLeft <= 0) {{
-                                    clearInterval(interval);
-                                    clock.innerHTML = "00:00 (Time Up!)";
-                                    clock.style.color = "#dc2626";
-                                }} else {{
-                                    var m = Math.floor(secondsLeft / 60);
-                                    var s = secondsLeft % 60;
-                                    clock.innerHTML = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
-                                }}
-                            }}, 1000);
-                        }}
-                    """ if auto_tick else ""
-
-                    timer_html = f"""
-                    <div class="timer-banner">
-                        <div>
-                            <strong>⏱️ Exam Timer</strong> ({st.session_state.quiz_duration_mins} Mins) &nbsp; {status_badge}
-                        </div>
-                        <div class="timer-digits" id="countdown_clock">
-                            {rem_mins:02d}:{rem_secs:02d}
-                        </div>
-                    </div>
-                    <script>
-                        {timer_js_tick}
-                    </script>
-                    """
-                    st.components.v1.html(timer_html, height=75)
-
-                with st.form("exam_quiz_form"):
-                    user_selections = {}
-                    for mcq in parsed_mcqs:
-                        q_num = mcq["number"]
-                        st.markdown(f"**Question {q_num}: {mcq['stem']}**")
-                        
-                        options = [
-                            f"A) {mcq['options']['A']}",
-                            f"B) {mcq['options']['B']}",
-                            f"C) {mcq['options']['C']}",
-                            f"D) {mcq['options']['D']}"
-                        ]
-                        
-                        selected = st.radio(
-                            f"Select answer for Q{q_num}:",
-                            options=options,
-                            index=None,
-                            key=f"exam_q_{q_num}",
-                            disabled=st.session_state.quiz_submitted
-                        )
-                        user_selections[q_num] = selected
-                        st.markdown("---")
-
-                    submit_quiz = st.form_submit_button(
-                        "📝 Submit Answers & Check Score" if not st.session_state.quiz_submitted else "Already Submitted",
-                        type="primary",
-                        disabled=st.session_state.quiz_submitted
-                    )
-
-                if submit_quiz:
-                    st.session_state.quiz_submitted = True
-                    st.session_state.quiz_answers = user_selections
-                    if st.session_state.timer_status == "running":
-                        now = time.time()
-                        elapsed = int(now - (st.session_state.timer_last_start_time or now))
-                        st.session_state.timer_remaining_sec = max(0, st.session_state.timer_remaining_sec - elapsed)
-                        st.session_state.timer_status = "paused"
-                        st.session_state.timer_last_start_time = None
-                    st.rerun()
-
-                if st.session_state.quiz_submitted:
-                    score = 0
-                    for mcq in parsed_mcqs:
-                        q_num = mcq["number"]
-                        ans = st.session_state.quiz_answers.get(q_num)
-                        picked_letter = ans[0] if ans else None
-                        if picked_letter == mcq["correct_answer"]:
-                            score += 1
-
-                    pct = int((score / total_mcqs) * 100)
-                    st.markdown("### 📊 Exam Results & Performance Analysis")
-                    c_sc1, c_sc2 = st.columns([1, 2])
-                    with c_sc1:
-                        st.metric("Final Score", f"{score} / {total_mcqs}", delta=f"{pct}% Score")
-                    with c_sc2:
-                        if pct >= 80:
-                            st.success("🌟 Outstanding Performance! Excellent conceptual mastery.")
-                        elif pct >= 60:
-                            st.warning("👍 Good Attempt! Review the detailed explanations below to strengthen weak areas.")
-                        else:
-                            st.error("⚠️ Needs Revision. Review the Study Material tab before re-attempting.")
-
-                    st.markdown("---")
-                    st.markdown("#### 🔍 Question-by-Question Detailed Review")
-
-                    for mcq in parsed_mcqs:
-                        q_num = mcq["number"]
-                        ans = st.session_state.quiz_answers.get(q_num)
-                        picked_letter = ans[0] if ans else "Unanswered"
-                        is_correct = (picked_letter == mcq["correct_answer"])
-
-                        status_pill = (
-                            f'<span class="quiz-pill-correct">✅ Correct (You picked: {picked_letter})</span>' 
-                            if is_correct 
-                            else f'<span class="quiz-pill-incorrect">❌ Incorrect (You picked: {picked_letter} | Correct: {mcq["correct_answer"]})</span>'
-                        )
-
-                        st.markdown(f"**Q{q_num}. {mcq['stem']}** &nbsp; {status_pill}", unsafe_allow_html=True)
-                        st.markdown(f"- A) {mcq['options']['A']}")
-                        st.markdown(f"- B) {mcq['options']['B']}")
-                        st.markdown(f"- C) {mcq['options']['C']}")
-                        st.markdown(f"- D) {mcq['options']['D']}")
-
-                        if mcq["explanation"]:
-                            st.info(f"💡 **Explanation & Learning Key**: {mcq['explanation']}")
-                        st.markdown("---")
-
-                    if st.button("🔄 Retake Exam / Reset Timer", use_container_width=True):
-                        st.session_state.quiz_submitted = False
-                        st.session_state.quiz_answers = {}
-                        st.session_state.quiz_start_time = time.time()
+                with btn_c2:
+                    if st.button("🔄 Reset", use_container_width=True):
                         st.session_state.timer_status = "idle"
                         st.session_state.timer_remaining_sec = st.session_state.quiz_duration_mins * 60
                         st.session_state.timer_last_start_time = None
                         st.rerun()
-        tab_index += 1
 
-    # TAB: Prompt Engineering Comparison
-    if st.session_state.naive_content and "🔬 Prompt Engineering Comparison" in tabs_to_show:
-        with rendered_tabs[tab_index]:
-            st.markdown("#### 🔬 Prompt Engineering Comparative Evaluation")
-            st.markdown(
-                "This evaluation contrasts an **Un-engineered Naive Prompt** "
-                "with the **Engineered Academic Prompt** powering this portal."
-            )
+            with t_col2:
+                # Calculate active remaining seconds
+                if st.session_state.timer_status == "running":
+                    now = time.time()
+                    elapsed = int(now - (st.session_state.timer_last_start_time or now))
+                    current_remaining = max(0, st.session_state.timer_remaining_sec - elapsed)
+                    status_badge = '<span style="color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">● RUNNING</span>'
+                    auto_tick = True
+                elif st.session_state.timer_status == "paused":
+                    current_remaining = st.session_state.timer_remaining_sec
+                    status_badge = '<span style="color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">❚❚ PAUSED</span>'
+                    auto_tick = False
+                else:  # idle
+                    current_remaining = st.session_state.timer_remaining_sec
+                    status_badge = '<span style="color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">○ NOT STARTED</span>'
+                    auto_tick = False
 
-            col_p1, col_p2 = st.columns(2)
-            with col_p1:
-                st.markdown("##### ⚠️ Baseline: Naive Generic Prompt")
-                st.caption(f"Prompt Sent: `{get_naive_generic_prompt(st.session_state.active_topic, st.session_state.active_unit, st.session_state.active_level, focus_areas)}`")
-                with st.container(height=650):
-                    st.markdown(st.session_state.naive_content)
-                
-            with col_p2:
-                st.markdown("##### ✨ Production: Engineered Prompt Result")
-                st.caption("Prompt Applied: Senior Professor Persona + Bloom's Taxonomy + Strict 6-Section Schema + PyTorch Code")
-                
-                if st.session_state.study_content and st.session_state.assignment_content:
-                    eng_view = st.radio(
-                        "Component to inspect:",
-                        ["📖 Study Material & Code", "📝 Exam & Assignment Bank"],
-                        horizontal=True,
-                        key="eng_view_toggle"
-                    )
-                    content_to_show = st.session_state.study_content if eng_view == "📖 Study Material & Code" else st.session_state.assignment_content
-                else:
-                    content_to_show = st.session_state.study_content or st.session_state.assignment_content
+                rem_mins = current_remaining // 60
+                rem_secs = current_remaining % 60
 
-                with st.container(height=650):
-                    st.markdown(content_to_show)
+                timer_js_tick = f"""
+                    var secondsLeft = {current_remaining};
+                    var clock = document.getElementById('countdown_clock');
+                    if (clock && secondsLeft > 0) {{
+                        var interval = setInterval(function() {{
+                            secondsLeft--;
+                            if (secondsLeft <= 0) {{
+                                clearInterval(interval);
+                                clock.innerHTML = "00:00 (Time Up!)";
+                                clock.style.color = "#dc2626";
+                            }} else {{
+                                var m = Math.floor(secondsLeft / 60);
+                                var s = secondsLeft % 60;
+                                clock.innerHTML = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+                            }}
+                        }}, 1000);
+                    }}
+                """ if auto_tick else ""
 
-            st.markdown("---")
-            st.markdown("##### 📊 Objective Architectural Comparison Matrix")
-            st.markdown(
+                timer_html = f"""
+                <div class="timer-banner">
+                    <div>
+                        <strong>⏱️ Exam Timer</strong> ({st.session_state.quiz_duration_mins} Mins) &nbsp; {status_badge}
+                    </div>
+                    <div class="timer-digits" id="countdown_clock">
+                        {rem_mins:02d}:{rem_secs:02d}
+                    </div>
+                </div>
+                <script>
+                    {timer_js_tick}
+                </script>
                 """
+                st.components.v1.html(timer_html, height=75)
+
+            with st.form("exam_quiz_form"):
+                user_selections = {}
+                for mcq in parsed_mcqs:
+                    q_num = mcq["number"]
+                    st.markdown(f"**Question {q_num}: {mcq['stem']}**")
+                    
+                    options = [
+                        f"A) {mcq['options']['A']}",
+                        f"B) {mcq['options']['B']}",
+                        f"C) {mcq['options']['C']}",
+                        f"D) {mcq['options']['D']}"
+                    ]
+                    
+                    selected = st.radio(
+                        f"Select answer for Q{q_num}:",
+                        options=options,
+                        index=None,
+                        key=f"exam_q_{q_num}",
+                        disabled=st.session_state.quiz_submitted
+                    )
+                    user_selections[q_num] = selected
+                    st.markdown("---")
+
+                submit_quiz = st.form_submit_button(
+                    "📝 Submit Answers & Check Score" if not st.session_state.quiz_submitted else "Already Submitted",
+                    type="primary",
+                    disabled=st.session_state.quiz_submitted
+                )
+
+            if submit_quiz:
+                st.session_state.quiz_submitted = True
+                st.session_state.quiz_answers = user_selections
+                if st.session_state.timer_status == "running":
+                    now = time.time()
+                    elapsed = int(now - (st.session_state.timer_last_start_time or now))
+                    st.session_state.timer_remaining_sec = max(0, st.session_state.timer_remaining_sec - elapsed)
+                    st.session_state.timer_status = "paused"
+                    st.session_state.timer_last_start_time = None
+                st.rerun()
+
+            if st.session_state.quiz_submitted:
+                score = 0
+                for mcq in parsed_mcqs:
+                    q_num = mcq["number"]
+                    ans = st.session_state.quiz_answers.get(q_num)
+                    picked_letter = ans[0] if ans else None
+                    if picked_letter == mcq["correct_answer"]:
+                        score += 1
+
+                pct = int((score / total_mcqs) * 100)
+                st.markdown("### 📊 Exam Results & Performance Analysis")
+                c_sc1, c_sc2 = st.columns([1, 2])
+                with c_sc1:
+                    st.metric("Final Score", f"{score} / {total_mcqs}", delta=f"{pct}% Score")
+                with c_sc2:
+                    if pct >= 80:
+                        st.success("🌟 Outstanding Performance! Excellent conceptual mastery.")
+                    elif pct >= 60:
+                        st.warning("👍 Good Attempt! Review the detailed explanations below to strengthen weak areas.")
+                    else:
+                        st.error("⚠️ Needs Revision. Review the Study Material tab before re-attempting.")
+
+                st.markdown("---")
+                st.markdown("#### 🔍 Question-by-Question Detailed Review")
+
+                for mcq in parsed_mcqs:
+                    q_num = mcq["number"]
+                    ans = st.session_state.quiz_answers.get(q_num)
+                    picked_letter = ans[0] if ans else "Unanswered"
+                    is_correct = (picked_letter == mcq["correct_answer"])
+
+                    status_pill = (
+                        f'<span class="quiz-pill-correct">✅ Correct (You picked: {picked_letter})</span>' 
+                        if is_correct 
+                        else f'<span class="quiz-pill-incorrect">❌ Incorrect (You picked: {picked_letter} | Correct: {mcq["correct_answer"]})</span>'
+                    )
+
+                    st.markdown(f"**Q{q_num}. {mcq['stem']}** &nbsp; {status_pill}", unsafe_allow_html=True)
+                    st.markdown(f"- A) {mcq['options']['A']}")
+                    st.markdown(f"- B) {mcq['options']['B']}")
+                    st.markdown(f"- C) {mcq['options']['C']}")
+                    st.markdown(f"- D) {mcq['options']['D']}")
+
+                    if mcq["explanation"]:
+                        st.info(f"💡 **Explanation & Learning Key**: {mcq['explanation']}")
+                    st.markdown("---")
+
+                if st.button("🔄 Retake Exam / Reset Timer", use_container_width=True):
+                    st.session_state.quiz_submitted = False
+                    st.session_state.quiz_answers = {}
+                    st.session_state.quiz_start_time = time.time()
+                    st.session_state.timer_status = "idle"
+                    st.session_state.timer_remaining_sec = st.session_state.quiz_duration_mins * 60
+                    st.session_state.timer_last_start_time = None
+                    st.rerun()
+
+    # 6. VIEW: Prompt Engineering Comparison
+    elif current_tab == "🔬 Prompt Engineering Comparison" and st.session_state.naive_content:
+        st.markdown("#### 🔬 Prompt Engineering Comparative Evaluation")
+        st.markdown(
+            "This evaluation contrasts an **Un-engineered Naive Prompt** "
+            "with the **Engineered Academic Prompt** powering this portal."
+        )
+
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            st.markdown("##### ⚠️ Baseline: Naive Generic Prompt")
+            st.caption(f"Prompt Sent: `{get_naive_generic_prompt(st.session_state.active_topic, st.session_state.active_unit, st.session_state.active_level, focus_areas)}`")
+            with st.container(height=650):
+                st.markdown(st.session_state.naive_content)
+            
+        with col_p2:
+            st.markdown("##### ✨ Production: Engineered Academic Prompt")
+            st.caption("Prompt Applied: Senior Professor Persona + Bloom's Taxonomy + Strict 6-Section Schema + PyTorch Code")
+            
+            with st.container(height=650):
+                with st.expander("📖 1. Engineered Study Material, Architecture & Code", expanded=True):
+                    st.markdown(st.session_state.study_content or "No study content generated.")
+                
+                if st.session_state.assignment_content:
+                    with st.expander("📝 2. Engineered Exam Bank, Solutions & Rubrics", expanded=True):
+                        st.markdown(st.session_state.assignment_content)
+
+        st.markdown("---")
+        st.markdown("##### 📊 Objective Architectural Comparison Matrix")
+        st.markdown(
+            """
 | Evaluation Criterion | ⚠️ Baseline: Naive Generic Prompt | ✨ Production: Engineered Prompt |
 | :--- | :--- | :--- |
 | **Pedagogical Persona** | Generic conversational AI / chatbot | Senior Professor & Examination Board Chief Moderator |
@@ -815,14 +809,13 @@ if st.session_state.study_content or st.session_state.assignment_content:
 | **Technical Depth** | Broad descriptive paragraphs | Precise math formulations, state transitions & PyTorch code |
 | **Assessments & Rubrics** | Casual bullet-point questions | Rigorous MCQs with distractors, model answers & grading criteria |
 | **Format & Usability** | Monolithic text | Modular 6-section schema + Mind Tree + Flashcards + Clean Export |
-                """
-            )
+            """
+        )
 
-            st.markdown("---")
-            st.markdown("##### 🔍 Why the Engineered Prompt Produces Superior Results:")
-            breakdown = get_prompt_engineering_breakdown()
-            for b in breakdown:
-                with st.expander(f"**{b['technique']}**", expanded=False):
-                    st.markdown(f"**How it is applied:** {b['implementation']}")
-                    st.markdown(f"**Why it matters in curriculum design:** {b['why_it_matters']}")
-        tab_index += 1
+        st.markdown("---")
+        st.markdown("##### 🔍 Why the Engineered Prompt Produces Superior Results:")
+        breakdown = get_prompt_engineering_breakdown()
+        for b in breakdown:
+            with st.expander(f"**{b['technique']}**", expanded=False):
+                st.markdown(f"**How it is applied:** {b['implementation']}")
+                st.markdown(f"**Why it matters in curriculum design:** {b['why_it_matters']}")
