@@ -10,7 +10,10 @@ Supports:
 
 import os
 import time
+import importlib
 import streamlit as st
+import prompts
+importlib.reload(prompts)
 from prompts import (
     build_study_material_prompt,
     build_assignment_prompt,
@@ -67,6 +70,12 @@ if "quiz_start_time" not in st.session_state:
     st.session_state.quiz_start_time = None
 if "quiz_duration_mins" not in st.session_state:
     st.session_state.quiz_duration_mins = 30
+if "timer_status" not in st.session_state:
+    st.session_state.timer_status = "idle"  # "idle", "running", "paused"
+if "timer_remaining_sec" not in st.session_state:
+    st.session_state.timer_remaining_sec = 30 * 60
+if "timer_last_start_time" not in st.session_state:
+    st.session_state.timer_last_start_time = None
 
 # Preset Data Map
 PRESET_DATA = {
@@ -236,7 +245,7 @@ focus_areas = st.text_input(
     placeholder="e.g. LLM, LVM, CNN, RNN, Transformers, Loss Functions"
 )
 
-col_gen1, col_gen2 = st.columns([2, 1])
+col_gen1, col_gen2 = st.columns([3, 2])
 with col_gen1:
     gen_mode = st.radio(
         "Output Generation Mode:",
@@ -248,6 +257,15 @@ with col_gen1:
         horizontal=True
     )
 with col_gen2:
+    depth_choice = st.selectbox(
+        "⚡ Generation Depth & Pacing:",
+        [
+            "⚡ High-Yield Syllabus Pack (Fast: ~15-20s)",
+            "📚 Comprehensive Deep Dive (~45-60s)"
+        ],
+        index=0,
+        help="High-Yield delivers punchy, syllabus-aligned modules with code, formulas, and rubrics in ~15-20s. Deep Dive generates exhaustive multi-page manual chapters."
+    )
     compare_naive = st.checkbox(
         "🔬 Include Naive Prompt Comparison (Demonstrate Prompt Engineering)",
         value=False,
@@ -263,6 +281,11 @@ if generate_button:
     st.session_state.flashcard_idx = 0
     st.session_state.flashcard_flipped = False
     st.session_state.quiz_start_time = time.time()
+    st.session_state.timer_status = "idle"
+    st.session_state.timer_remaining_sec = st.session_state.quiz_duration_mins * 60
+    st.session_state.timer_last_start_time = None
+
+    selected_depth = "High-Yield" if "High-Yield" in depth_choice else "Comprehensive"
 
     # Smart guard: If user changed topic to AI/ML or another topic, but left unit as Process Management, adapt it!
     effective_unit = unit_name.strip()
@@ -282,49 +305,55 @@ if generate_button:
     generation_failed = False
 
     with st.spinner(f"Querying {provider_choice} ({selected_model}) for '{course_topic}: {effective_unit}' (Focus: {focus_areas})..."):
-        if "Complete Course Pack" in gen_mode:
-            study_prompt = build_study_material_prompt(course_topic, academic_level, effective_unit, focus_areas)
-            assign_prompt = build_assignment_prompt(course_topic, academic_level, effective_unit, focus_areas)
-            
-            study_res = llm.generate(study_prompt)
+        from concurrent.futures import ThreadPoolExecutor
+        tasks = {}
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            if "Complete Course Pack" in gen_mode:
+                s_prompt = build_study_material_prompt(course_topic, academic_level, effective_unit, focus_areas, depth=selected_depth)
+                a_prompt = build_assignment_prompt(course_topic, academic_level, effective_unit, focus_areas, depth=selected_depth)
+                tasks["study"] = executor.submit(llm.generate, s_prompt)
+                tasks["assign"] = executor.submit(llm.generate, a_prompt)
+            elif "Study Material Only" in gen_mode:
+                s_prompt = build_study_material_prompt(course_topic, academic_level, effective_unit, focus_areas, depth=selected_depth)
+                tasks["study"] = executor.submit(llm.generate, s_prompt)
+            else:
+                a_prompt = build_assignment_prompt(course_topic, academic_level, effective_unit, focus_areas, depth=selected_depth)
+                tasks["assign"] = executor.submit(llm.generate, a_prompt)
+
+            if compare_naive:
+                n_prompt = get_naive_generic_prompt(course_topic, effective_unit, academic_level, focus_areas)
+                tasks["naive"] = executor.submit(llm.generate, n_prompt)
+
+        # Collect results
+        study_res = tasks["study"].result() if "study" in tasks else None
+        assign_res = tasks["assign"].result() if "assign" in tasks else None
+        naive_res = tasks["naive"].result() if "naive" in tasks else None
+
+        if study_res:
             if not study_res["success"]:
-                st.error(f"❌ {study_res['error']}")
+                st.error(f"❌ Study Notes Generation Error: {study_res['error']}")
                 generation_failed = True
             else:
                 st.session_state.study_content = study_res["content"]
-                
-                assign_res = llm.generate(assign_prompt)
-                if not assign_res["success"]:
-                    st.error(f"❌ {assign_res['error']}")
-                    generation_failed = True
-                else:
-                    st.session_state.assignment_content = assign_res["content"]
-            
-        elif "Study Material Only" in gen_mode:
-            study_prompt = build_study_material_prompt(course_topic, academic_level, effective_unit, focus_areas)
-            study_res = llm.generate(study_prompt)
-            if not study_res["success"]:
-                st.error(f"❌ {study_res['error']}")
-                generation_failed = True
-            else:
-                st.session_state.study_content = study_res["content"]
-                st.session_state.assignment_content = None
-            
         else:
-            assign_prompt = build_assignment_prompt(course_topic, academic_level, effective_unit, focus_areas)
-            assign_res = llm.generate(assign_prompt)
+            st.session_state.study_content = None
+
+        if assign_res:
             if not assign_res["success"]:
-                st.error(f"❌ {assign_res['error']}")
+                st.error(f"❌ Assignment Generation Error: {assign_res['error']}")
                 generation_failed = True
             else:
                 st.session_state.assignment_content = assign_res["content"]
-                st.session_state.study_content = None
+        else:
+            st.session_state.assignment_content = None
 
-        if compare_naive and not generation_failed:
-            naive_prompt = get_naive_generic_prompt(course_topic, effective_unit, academic_level, focus_areas)
-            naive_res = llm.generate(naive_prompt)
+        if naive_res:
             if naive_res["success"]:
                 st.session_state.naive_content = naive_res["content"]
+            else:
+                st.warning(f"⚠️ Naive Prompt Baseline Notice: {naive_res.get('error')}")
+                st.session_state.naive_content = None
         else:
             st.session_state.naive_content = None
 
@@ -345,7 +374,7 @@ if st.session_state.study_content or st.session_state.assignment_content:
         tabs_to_show.append("Assignment & Question Bank")
         tabs_to_show.append("Timed Examination (30 Min)")
     if st.session_state.naive_content:
-        tabs_to_show.append("Prompt Engineering Comparison")
+        tabs_to_show.append("🔬 Prompt Engineering Comparison")
 
     rendered_tabs = st.tabs(tabs_to_show)
     tab_index = 0
@@ -547,36 +576,70 @@ if st.session_state.study_content or st.session_state.assignment_content:
 
                 t_col1, t_col2 = st.columns([1, 2])
                 with t_col1:
+                    avail_mins = [15, 30, 45, 60]
+                    curr_idx = avail_mins.index(st.session_state.quiz_duration_mins) if st.session_state.quiz_duration_mins in avail_mins else 1
                     timer_mins = st.selectbox(
                         "Set Exam Duration:",
-                        [15, 30, 45, 60],
-                        index=1,
-                        help="Default is 30 minutes. You can adjust before starting."
+                        avail_mins,
+                        index=curr_idx,
+                        disabled=(st.session_state.timer_status == "running"),
+                        help="Choose exam duration. Can be changed when timer is not running."
                     )
-                    st.session_state.quiz_duration_mins = timer_mins
+                    if timer_mins != st.session_state.quiz_duration_mins:
+                        st.session_state.quiz_duration_mins = timer_mins
+                        if st.session_state.timer_status == "idle":
+                            st.session_state.timer_remaining_sec = timer_mins * 60
+
+                    btn_c1, btn_c2 = st.columns(2)
+                    with btn_c1:
+                        if st.session_state.timer_status == "idle":
+                            if st.button("▶️ Start", use_container_width=True, type="primary"):
+                                st.session_state.timer_status = "running"
+                                st.session_state.timer_last_start_time = time.time()
+                                st.rerun()
+                        elif st.session_state.timer_status == "running":
+                            if st.button("⏸️ Pause", use_container_width=True):
+                                now = time.time()
+                                elapsed = int(now - (st.session_state.timer_last_start_time or now))
+                                st.session_state.timer_remaining_sec = max(0, st.session_state.timer_remaining_sec - elapsed)
+                                st.session_state.timer_status = "paused"
+                                st.session_state.timer_last_start_time = None
+                                st.rerun()
+                        elif st.session_state.timer_status == "paused":
+                            if st.button("▶️ Resume", use_container_width=True, type="primary"):
+                                st.session_state.timer_status = "running"
+                                st.session_state.timer_last_start_time = time.time()
+                                st.rerun()
+
+                    with btn_c2:
+                        if st.button("🔄 Reset", use_container_width=True):
+                            st.session_state.timer_status = "idle"
+                            st.session_state.timer_remaining_sec = st.session_state.quiz_duration_mins * 60
+                            st.session_state.timer_last_start_time = None
+                            st.rerun()
 
                 with t_col2:
-                    if st.session_state.quiz_start_time is None:
-                        st.session_state.quiz_start_time = time.time()
+                    # Calculate active remaining seconds
+                    if st.session_state.timer_status == "running":
+                        now = time.time()
+                        elapsed = int(now - (st.session_state.timer_last_start_time or now))
+                        current_remaining = max(0, st.session_state.timer_remaining_sec - elapsed)
+                        status_badge = '<span style="color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">● RUNNING</span>'
+                        auto_tick = True
+                    elif st.session_state.timer_status == "paused":
+                        current_remaining = st.session_state.timer_remaining_sec
+                        status_badge = '<span style="color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">❚❚ PAUSED</span>'
+                        auto_tick = False
+                    else:  # idle
+                        current_remaining = st.session_state.timer_remaining_sec
+                        status_badge = '<span style="color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight:700; padding: 2px 7px; border-radius: 4px;">○ NOT STARTED</span>'
+                        auto_tick = False
 
-                    duration_seconds = st.session_state.quiz_duration_mins * 60
-                    elapsed_seconds = int(time.time() - st.session_state.quiz_start_time)
-                    remaining_seconds = max(0, duration_seconds - elapsed_seconds)
+                    rem_mins = current_remaining // 60
+                    rem_secs = current_remaining % 60
 
-                    rem_mins = remaining_seconds // 60
-                    rem_secs = remaining_seconds % 60
-
-                    timer_html = f"""
-                    <div class="timer-banner">
-                        <div>
-                            <strong>⏱️ Exam Timer Active</strong> ({timer_mins} Minutes Total)
-                        </div>
-                        <div class="timer-digits" id="countdown_clock">
-                            {rem_mins:02d}:{rem_secs:02d}
-                        </div>
-                    </div>
-                    <script>
-                        var secondsLeft = {remaining_seconds};
+                    timer_js_tick = f"""
+                        var secondsLeft = {current_remaining};
                         var clock = document.getElementById('countdown_clock');
                         if (clock && secondsLeft > 0) {{
                             var interval = setInterval(function() {{
@@ -584,7 +647,7 @@ if st.session_state.study_content or st.session_state.assignment_content:
                                 if (secondsLeft <= 0) {{
                                     clearInterval(interval);
                                     clock.innerHTML = "00:00 (Time Up!)";
-                                    clock.style.color = "#f87171";
+                                    clock.style.color = "#dc2626";
                                 }} else {{
                                     var m = Math.floor(secondsLeft / 60);
                                     var s = secondsLeft % 60;
@@ -592,6 +655,19 @@ if st.session_state.study_content or st.session_state.assignment_content:
                                 }}
                             }}, 1000);
                         }}
+                    """ if auto_tick else ""
+
+                    timer_html = f"""
+                    <div class="timer-banner">
+                        <div>
+                            <strong>⏱️ Exam Timer</strong> ({st.session_state.quiz_duration_mins} Mins) &nbsp; {status_badge}
+                        </div>
+                        <div class="timer-digits" id="countdown_clock">
+                            {rem_mins:02d}:{rem_secs:02d}
+                        </div>
+                    </div>
+                    <script>
+                        {timer_js_tick}
                     </script>
                     """
                     st.components.v1.html(timer_html, height=75)
@@ -628,6 +704,12 @@ if st.session_state.study_content or st.session_state.assignment_content:
                 if submit_quiz:
                     st.session_state.quiz_submitted = True
                     st.session_state.quiz_answers = user_selections
+                    if st.session_state.timer_status == "running":
+                        now = time.time()
+                        elapsed = int(now - (st.session_state.timer_last_start_time or now))
+                        st.session_state.timer_remaining_sec = max(0, st.session_state.timer_remaining_sec - elapsed)
+                        st.session_state.timer_status = "paused"
+                        st.session_state.timer_last_start_time = None
                     st.rerun()
 
                 if st.session_state.quiz_submitted:
@@ -681,6 +763,9 @@ if st.session_state.study_content or st.session_state.assignment_content:
                         st.session_state.quiz_submitted = False
                         st.session_state.quiz_answers = {}
                         st.session_state.quiz_start_time = time.time()
+                        st.session_state.timer_status = "idle"
+                        st.session_state.timer_remaining_sec = st.session_state.quiz_duration_mins * 60
+                        st.session_state.timer_last_start_time = None
                         st.rerun()
         tab_index += 1
 
@@ -689,21 +774,49 @@ if st.session_state.study_content or st.session_state.assignment_content:
         with rendered_tabs[tab_index]:
             st.markdown("#### 🔬 Prompt Engineering Comparative Evaluation")
             st.markdown(
-                "This evaluation analyzes the difference between a **Naive / Generic Prompt** "
-                "and the **Engineered Prompt** powering this generator."
+                "This evaluation contrasts an **Un-engineered Naive Prompt** "
+                "with the **Engineered Academic Prompt** powering this portal."
             )
 
             col_p1, col_p2 = st.columns(2)
             with col_p1:
                 st.markdown("##### ⚠️ Baseline: Naive Generic Prompt")
-                st.caption(f"Prompt Sent: `{get_naive_generic_prompt(st.session_state.active_topic, st.session_state.active_unit, st.session_state.active_level)}`")
-                st.markdown(st.session_state.naive_content)
+                st.caption(f"Prompt Sent: `{get_naive_generic_prompt(st.session_state.active_topic, st.session_state.active_unit, st.session_state.active_level, focus_areas)}`")
+                with st.container(height=650):
+                    st.markdown(st.session_state.naive_content)
                 
             with col_p2:
                 st.markdown("##### ✨ Production: Engineered Prompt Result")
-                st.caption("Prompt Applied: Persona + Bloom's Taxonomy + Strict Modular Schema")
-                summary_preview = (st.session_state.study_content or st.session_state.assignment_content)[:1200]
-                st.markdown(summary_preview + "\n\n*(Full content available in dedicated tabs)*")
+                st.caption("Prompt Applied: Senior Professor Persona + Bloom's Taxonomy + Strict 6-Section Schema + PyTorch Code")
+                
+                if st.session_state.study_content and st.session_state.assignment_content:
+                    eng_view = st.radio(
+                        "Component to inspect:",
+                        ["📖 Study Material & Code", "📝 Exam & Assignment Bank"],
+                        horizontal=True,
+                        key="eng_view_toggle"
+                    )
+                    content_to_show = st.session_state.study_content if eng_view == "📖 Study Material & Code" else st.session_state.assignment_content
+                else:
+                    content_to_show = st.session_state.study_content or st.session_state.assignment_content
+
+                with st.container(height=650):
+                    st.markdown(content_to_show)
+
+            st.markdown("---")
+            st.markdown("##### 📊 Objective Architectural Comparison Matrix")
+            st.markdown(
+                """
+| Evaluation Criterion | ⚠️ Baseline: Naive Generic Prompt | ✨ Production: Engineered Prompt |
+| :--- | :--- | :--- |
+| **Pedagogical Persona** | Generic conversational AI / chatbot | Senior Professor & Examination Board Chief Moderator |
+| **Curriculum Alignment** | Casual conversational overview | Calibrated to university syllabus standards (B.Tech / UG / PG) |
+| **Learning Objectives** | Absent or vague | Enforces 4–5 measurable Bloom's Taxonomy CLOs |
+| **Technical Depth** | Broad descriptive paragraphs | Precise math formulations, state transitions & PyTorch code |
+| **Assessments & Rubrics** | Casual bullet-point questions | Rigorous MCQs with distractors, model answers & grading criteria |
+| **Format & Usability** | Monolithic text | Modular 6-section schema + Mind Tree + Flashcards + Clean Export |
+                """
+            )
 
             st.markdown("---")
             st.markdown("##### 🔍 Why the Engineered Prompt Produces Superior Results:")

@@ -91,14 +91,30 @@ class LLMService:
                 from google import genai
                 client = genai.Client(api_key=self.api_key)
                 
+                from google.genai import types
+                
                 # Model normalization (support gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash, etc.)
                 target_model = self.model or "gemini-2.5-flash"
                 
                 full_content = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
-                response = client.models.generate_content(
-                    model=target_model,
-                    contents=full_content
-                )
+
+                # Disable thinking budget on 2.5-flash / thinking models for lightning-fast latency (seconds instead of minutes)
+                try:
+                    fast_config = types.GenerateContentConfig(
+                        thinking_config=types.ThinkingConfig(thinking_budget=0),
+                        temperature=0.6
+                    )
+                    response = client.models.generate_content(
+                        model=target_model,
+                        contents=full_content,
+                        config=fast_config
+                    )
+                except Exception:
+                    # Graceful fallback without thinking_config if model does not support it
+                    response = client.models.generate_content(
+                        model=target_model,
+                        contents=full_content
+                    )
                 
                 content = response.text or ""
                 duration = time.time() - start_time

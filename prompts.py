@@ -6,7 +6,7 @@ are strictly injected and emphasized in the generation.
 
 from typing import Dict, Any, List
 
-def build_study_material_prompt(topic: str, level: str, unit: str, focus_areas: str = "", depth: str = "Comprehensive") -> str:
+def build_study_material_prompt(topic: str, level: str, unit: str, focus_areas: str = "", depth: str = "High-Yield", **kwargs) -> str:
     """
     Engineered prompt specifically crafted for in-depth, syllabus-standard study material.
     Strictly incorporates topic, unit, and user's specific focus concepts.
@@ -20,6 +20,13 @@ The student/instructor has requested that you EXPLICITLY and THOROUGHLY cover th
 Make sure every single one of these concepts is explained with technical depth, architectural diagrams, formulas, and real-world examples!
 """
 
+    pacing_directive = (
+        "Pacing & Length: Produce a high-yield, punchy, and rigorous module (approximately 1,500 to 2,000 words total). "
+        "Maximize technical density, mathematical clarity, and code quality while avoiding redundant rambling."
+        if depth == "High-Yield" else
+        "Pacing & Length: Exhaustive, comprehensive university lecture manual (~3,000+ words). Cover every sub-mechanism in granular academic depth."
+    )
+
     return f"""Act as a distinguished Senior Professor and Curriculum Director in {topic}.
 
 Your task is to write a master-class, publication-grade academic Study Material module on:
@@ -27,6 +34,8 @@ Your task is to write a master-class, publication-grade academic Study Material 
 - Academic Level: {level}
 - Unit / Module Title: {unit}
 {focus_directive}
+{pacing_directive}
+
 Format your output in clean, professional Markdown with the following exact structure:
 
 # {topic}: {unit}
@@ -41,7 +50,7 @@ Format your output in clean, professional Markdown with the following exact stru
 - If focus areas ({focus_areas or unit}) are specified, define each one with mathematical / formal clarity.
 
 ## 3. In-Depth Technical Concepts & Architectural Walkthrough
-- Provide an exhaustive, step-by-step conceptual explanation tailored to {level} students.
+- Provide a structured conceptual explanation tailored to {level} students.
 - Break down the core mechanisms, internal structures, state transitions, mathematical equations, or neural architectures.
 - Include structured ASCII or Markdown comparison tables, component diagrams, and workflow summaries.
 - Address edge cases, training bottlenecks, optimization trade-offs, or scaling laws.
@@ -51,7 +60,7 @@ Format your output in clean, professional Markdown with the following exact stru
 - Provide a clean mapping table connecting each component of the analogy to its technical counterpart.
 
 ## 5. Practical Implementation & Real-World Code / Case Study
-- Provide realistic code snippets (e.g. PyTorch, Python, POSIX C, or pseudocode) demonstrating real-world usage.
+- Provide realistic, clean code snippets (e.g. PyTorch, Python, POSIX C, or pseudocode) demonstrating real-world usage.
 - Walk through the implementation logic step-by-step.
 - Highlight key libraries, APIs, or design patterns used in production.
 
@@ -60,7 +69,7 @@ Format your output in clean, professional Markdown with the following exact stru
 """
 
 
-def build_assignment_prompt(topic: str, level: str, unit: str, focus_areas: str = "", num_mcqs: int = 5) -> str:
+def build_assignment_prompt(topic: str, level: str, unit: str, focus_areas: str = "", num_mcqs: int = 5, depth: str = "High-Yield", **kwargs) -> str:
     """
     Engineered prompt specifically crafted for multi-tiered assignments and question banks.
     Strictly assesses the user's specific topic and focus concepts.
@@ -72,6 +81,9 @@ PRIMARY FOCUS & MANDATORY TOPICS:
 Ensure your questions directly test and evaluate the following concepts:
 👉 {focus_areas.strip()}
 """
+
+    num_short = 3 if depth == "High-Yield" else 5
+    num_long = 2 if depth == "High-Yield" else 5
 
     return f"""Act as an Examination Board Chief Moderator for {level} in {topic}.
 
@@ -104,8 +116,8 @@ For each question, strictly follow this format:
 
 ---
 
-## SECTION B: Short-Answer Conceptual Questions (5 Questions, 3-5 Marks Each)
-Provide 5 focused analytical questions suitable for university mid-term exams.
+## SECTION B: Short-Answer Conceptual Questions ({num_short} Questions, 3-5 Marks Each)
+Provide {num_short} focused analytical questions suitable for university mid-term exams.
 For each question:
 1. State the question clearly.
 2. Specify the recommended marks (e.g., [3 Marks] or [5 Marks]).
@@ -113,8 +125,8 @@ For each question:
 
 ---
 
-## SECTION C: Long-Answer & Design Questions (5 Questions, 10-15 Marks Each)
-Provide 5 comprehensive essay, numerical, or architectural design questions typical of university semester end examinations.
+## SECTION C: Long-Answer & Design Questions ({num_long} Questions, 10-15 Marks Each)
+Provide {num_long} comprehensive essay, numerical, or architectural design questions typical of university semester end examinations.
 For each question:
 1. State the full question prompt with any relevant specifications or constraints.
 2. Specify marks (e.g., [10 Marks] or [15 Marks]).
