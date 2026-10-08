@@ -1,147 +1,210 @@
-/* AI Assignment & Study Material Generator — Academic Styling */
+/* Academic Curriculum & Assessment Suite — Minimalist White Academic Theme */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --primary-light: #eff6ff;
+  --primary: #0f172a;
+  --primary-hover: #1e293b;
+  --bg-page: #ffffff;
+  --bg-subtle: #f8fafc;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
   --text-main: #0f172a;
   --text-muted: #64748b;
-  --border-light: #e2e8f0;
-  --card-bg: #ffffff;
+  --text-light: #475569;
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--text-main);
-  background-color: #f8fafc;
+  background-color: var(--bg-page);
 }
 
-/* Main App Header */
+/* Institutional Clean Header */
 .app-header {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-radius: 14px;
-  padding: 2rem 2.2rem;
-  color: #ffffff;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 0 1.75rem 0;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.15);
-  border: 1px solid #334155;
 }
 
 .app-header .tagline {
   display: inline-block;
-  background: rgba(37, 99, 235, 0.2);
-  color: #60a5fa;
-  border: 1px solid rgba(96, 165, 250, 0.3);
-  font-size: 0.75rem;
-  font-weight: 700;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 4px 10px;
-  border-radius: 6px;
-  margin-bottom: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
 }
 
 .app-header h1 {
-  font-size: 2.1rem;
-  font-weight: 800;
-  color: #ffffff !important;
+  font-size: 1.95rem;
+  font-weight: 700;
+  color: #0f172a !important;
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .app-header p {
-  color: #94a3b8;
-  font-size: 1rem;
-  margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 0.98rem;
+  margin-top: 0.35rem;
   margin-bottom: 0;
+  line-height: 1.5;
 }
 
-/* Question Cards */
+/* Question Containers */
 .question-container {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid var(--primary);
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-bottom: 1.25rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid #334155;
+  border-radius: 6px;
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1rem;
 }
 
-/* Flashcard Container */
+/* Exam Timer Banner */
+.timer-banner {
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 10px 18px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border-strong);
+}
+
+.timer-digits {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.05em;
+}
+
+/* Minimalist Academic Flashcard */
 .flashcard-box {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 2.2rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-  min-height: 220px;
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 2rem;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  transition: all 0.2s ease-in-out;
-  margin-bottom: 1.5rem;
-}
-
-.flashcard-box:hover {
-  border-color: #93c5fd;
-  box-shadow: 0 12px 28px -5px rgba(37, 99, 235, 0.1);
+  margin-bottom: 1.25rem;
 }
 
 .flashcard-badge {
   display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: #dbeafe;
-  color: #1e40af;
-  padding: 3px 10px;
-  border-radius: 12px;
-  margin-bottom: 0.8rem;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
   width: fit-content;
 }
 
 .flashcard-content {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 600;
+  color: #0f172a;
+  line-height: 1.5;
+}
+
+.flashcard-answer {
+  background: #f8fafc;
+  border-left: 3px solid #0f172a;
+  border: 1px solid #e2e8f0;
+  border-left-width: 3px;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+  font-size: 0.98rem;
   color: #1e293b;
   line-height: 1.6;
 }
 
-.flashcard-answer {
-  background: #f0fdf4;
-  border-left: 4px solid #10b981;
-  padding: 1rem;
-  border-radius: 6px;
-  margin-top: 1rem;
-  font-size: 1.05rem;
-  color: #064e3b;
-  line-height: 1.5;
-}
-
-/* Mind Tree Container */
-.mindtree-card {
-  background: #ffffff;
+/* Marks Badge */
+.marks-badge {
+  background: #f8fafc;
+  color: #475569;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-left: 6px;
 }
 
-/* Quiz Submission Status Pill */
+/* Quiz Submission Status */
 .quiz-pill-correct {
-  background: #dcfce7;
-  color: #15803d;
-  font-weight: 700;
-  padding: 3px 8px;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  font-weight: 600;
+  padding: 2px 8px;
   border-radius: 4px;
+  font-size: 0.85rem;
 }
 
 .quiz-pill-incorrect {
-  background: #fee2e2;
-  color: #b91c1c;
-  font-weight: 700;
-  padding: 3px 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  font-weight: 600;
+  padding: 2px 8px;
   border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* Sidebar Styling */
+[data-testid="stSidebar"] {
+  background-color: #fafafa;
+  border-right: 1px solid #f1f5f9;
+}
+
+/* Primary Button Styling */
+button[kind="primary"] {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid #0f172a !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+}
+
+button[kind="primary"]:hover {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+}
+
+/* Tab Headers */
+.stTabs [data-baseweb="tab-list"] {
+  gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.stTabs [data-baseweb="tab"] {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #64748b;
+  padding: 8px 14px;
+}
+
+.stTabs [aria-selected="true"] {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  border-bottom-color: #0f172a !important;
 }

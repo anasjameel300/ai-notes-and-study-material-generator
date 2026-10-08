@@ -1,10 +1,10 @@
 """
 Multi-Provider LLM Service Module for AI Assignment & Study Material Generator.
 Supports:
-1. Google Gemini (via google-generativeai or OpenAI-compatible endpoint)
+1. Google Gemini (via official google-genai SDK or OpenAI-compatible endpoint)
 2. OpenRouter (OpenAI-compatible client with base_url="https://openrouter.ai/api/v1")
 3. OpenAI (Official OpenAI API)
-4. High-Fidelity Offline Academic Engine (for zero-setup demo & evaluation)
+4. Offline Academic Engine (ONLY when no API key is provided)
 """
 
 import os
@@ -14,298 +14,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Built-in High-Fidelity Academic Knowledge Base for Offline / Demo Mode
-SAMPLE_KNOWLEDGE_BASE = {
-    "Operating System": {
-        "Process Management": {
-            "study_material": """# Operating System: Process Management
-*Academic Level: B.Tech | Curriculum Study Material*
-
----
-
-## 1. Introduction & Learning Objectives
-Process Management is one of the foundational responsibilities of modern multiprogramming and multitasking operating systems. While the Central Processing Unit (CPU) provides the raw execution capability, the operating system abstraction known as a **process** ensures that multiple tasks can execute concurrently, share finite hardware resources safely, and remain protected from unauthorized memory access or execution interference.
-
-### Course Learning Outcomes (CLOs)
-By the end of this study module, students will be able to:
-1. **Differentiate** between dormant disk-resident programs and active in-memory processes.
-2. **Trace and Model** the transitions across the classical 5-State Process Lifecycle.
-3. **Analyze** the architectural structure and kernel management of the Process Control Block (PCB).
-4. **Evaluate** context-switching mechanics, quantify CPU scheduling overhead, and implement POSIX process control primitives.
-
----
-
-## 2. Core Definitions & Technical Glossary
-- **Process**: An instance of a computer program in active execution. It encompasses the executable code (text section), current activity represented by the program counter and hardware registers, stack (temporary data such as function parameters, return addresses, and local variables), data section (global variables), and heap (dynamically allocated memory at runtime).
-- **Program vs. Process**: A program is a passive entity stored as an executable binary file on disk; a process is an active entity loaded into RAM with an assigned process identifier (PID), execution state, and dedicated address space.
-- **Process Control Block (PCB)**: A fundamental kernel data structure representing an execution context, containing state metadata, CPU registers, memory management info, and I/O status.
-- **Context Switch**: The hardware and OS mechanism of saving the state of the active running process into its PCB and restoring the state of another ready process to CPU registers.
-- **Degree of Multiprogramming**: The maximum number of distinct processes maintained concurrently in main memory.
-
----
-
-## 3. In-Depth Technical Concepts & Architectural Walkthrough
-
-### 3.1 The 5-State Process Lifecycle
-A process undergoes dynamic transitions throughout its existence:
-
-```
-[ New ] ---> [ Ready ] <====== Context Switch ======> [ Running ] ---> [ Terminated ]
-                 ^                                         |
-                 |                                         | I/O or Event Wait
-                 +----------- [ Waiting / Blocked ] <------+
-```
-
-1. **New**: The process is being created and its address space is allocated.
-2. **Ready**: The process is loaded in main memory and waiting for CPU assignment by the Short-Term Scheduler.
-3. **Running**: The CPU dispatcher has loaded the process registers and instructions are being executed.
-4. **Waiting (Blocked)**: The process cannot proceed until an external event (disk I/O, network packet, lock release) completes.
-5. **Terminated**: Execution is complete; OS reclaims memory and open file descriptors.
-
-### 3.2 Anatomy of the Process Control Block (PCB)
-Each PCB in the OS kernel table maintains:
-| PCB Component | Purpose & Contents |
-| :--- | :--- |
-| **PID (Process Identifier)** | Unique integer assigned by the kernel (e.g., `PID 1024`). |
-| **Process State** | Current state flag (`READY`, `RUNNING`, `WAITING`, etc.). |
-| **Program Counter (PC)** | Memory address of the next machine instruction to execute. |
-| **CPU Registers** | Accumulators, index registers, stack pointers saved during preemption. |
-| **CPU-Scheduling Info** | Priority level, pointers to scheduling queues, execution budget. |
-| **Memory Management Info** | Page tables, segment tables, base and limit registers. |
-| **Accounting & I/O Status** | CPU time used, list of open file descriptors, allocated devices. |
-
-### 3.3 Context Switching Mechanics & Overhead
-When an interrupt (e.g., timer quantum expiration) occurs:
-1. Current hardware registers are pushed onto the process kernel stack.
-2. Kernel executes the interrupt handler and calls the scheduler.
-3. The scheduler selects Process B from the ready queue.
-4. OS flushes CPU register caches, updates Memory Management Unit (MMU) page directory base register (`CR3` in x86).
-5. Registers of Process B are popped into physical CPU registers.
-6. Execution resumes at Process B's Program Counter.
-*Context switch time is pure system overhead; no productive user computation occurs during this interval (typically 1 to 10 microseconds).*
-
----
-
-## 4. Real-World Intuitive Analogy
-**The Michelin-Starred Head Chef in a High-Volume Kitchen:**
-- **The Program**: A printed recipe in a cookbook sitting closed on a shelf (dormant, static).
-- **The Process**: The active preparation of that dish on the kitchen counter (requires ingredients, counter space, active hands).
-- **The CPU**: The Head Chef who actually performs chopping, sautéing, and seasoning.
-- **Context Switching**: The chef stops searing a steak (saves steak pan status on a counter note - PCB), quickly plates a soufflé for another table, and then returns to the steak pan.
-- **Waiting State**: Dough placed into an oven for 30 minutes. The chef does not stand idle; they switch to another dish until the oven timer rings (I/O completion interrupt).
-
----
-
-## 5. Practical Implementation & POSIX System Calls
-Under Unix/Linux systems, process creation follows the `fork()` and `exec()` paradigm:
-
-```c
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-int main() {
-    pid_t pid = fork(); // Duplicates calling process
-
-    if (pid < 0) {
-        perror("Fork failed");
-        return 1;
-    } else if (pid == 0) {
-        // Child Process: distinct PID, copy-on-write memory
-        printf("[Child] PID: %d, Parent PID: %d\\n", getpid(), getppid());
-        execlp("/bin/ls", "ls", "-l", NULL);
-    } else {
-        // Parent Process: waits for child termination
-        printf("[Parent] Waiting for Child PID: %d\\n", pid);
-        wait(NULL);
-        printf("[Parent] Child complete. Resuming parent.\\n");
-    }
-    return 0;
-}
-```
-
----
-
-## 6. Key Takeaways & Exam Revision Summary
-- A process = Program Code + Dynamic Execution Context (Stack + Heap + Registers + PC).
-- Context Switching time is non-productive CPU overhead influenced by memory architecture and TLB flushes.
-- PCBs are dynamically allocated in kernel memory; failing to clean up child process entries creates **Zombie Processes**.
-""",
-            "assignment": """# Assignment & Examination Question Bank: Process Management
-*Subject: Operating System | Target: B.Tech Computer Science & Engineering*
-
----
-
-## SECTION A: Multiple Choice Questions (5 Questions)
-
-### MCQ 1
-**Question**: Which of the following registers or fields inside the Process Control Block (PCB) is the very first to be saved when a hardware timer interrupt occurs?
-- A) Open File Descriptors
-- B) Program Counter and CPU General-Purpose Registers
-- C) Process Identifier (PID)
-- D) Base and Limit Memory Registers
-**Correct Answer**: B
-**Explanation**: The Program Counter and CPU registers preserve the exact micro-state of instruction execution so that the preempted process can resume seamlessly.
-**Bloom's Level**: Understand
-
----
-
-### MCQ 2
-**Question**: When a running process makes a synchronous `read()` system call requesting blocks from a physical magnetic hard drive, what state transition is triggered?
-- A) Running -> Ready
-- B) Running -> Waiting (Blocked)
-- C) Running -> Terminated
-- D) Waiting -> Ready
-**Correct Answer**: B
-**Explanation**: Synchronous secondary storage operations require substantial latency; the CPU deschedules the process into the Waiting state until the disk controller signals completion.
-**Bloom's Level**: Understand
-
----
-
-### MCQ 3
-**Question**: Context switching time represents pure computational overhead because:
-- A) It continuously fragments physical memory
-- B) The CPU executes internal operating system bookkeeping routines rather than application instructions
-- C) It triggers thrashing in the swap partition
-- D) It deallocates the process address space
-**Correct Answer**: B
-**Explanation**: Context switching does not accomplish any useful application work; it spends processor cycles solely on saving and restoring architectural registers and swapping memory maps.
-**Bloom's Level**: Analyze
-
----
-
-### MCQ 4
-**Question**: In Unix POSIX process management, what is the consequence if a parent process never invokes `wait()` or `waitpid()` after its child process has exited?
-- A) The child process continues executing indefinitely
-- B) The child process remains in the process table as a Zombie process
-- C) The kernel crashes due to an unhandled signal
-- D) The child is automatically converted into an Orphan process adopted by init
-**Correct Answer**: B
-**Explanation**: Until the parent reads the child's termination status via `wait()`, the kernel retains the child's entry in the process table as a zombie.
-**Bloom's Level**: Apply
-
----
-
-### MCQ 5
-**Question**: Which operating system scheduling component directly controls the degree of multiprogramming?
-- A) Short-Term Scheduler (CPU Scheduler)
-- B) Medium-Term Scheduler (Swapper)
-- C) Long-Term Scheduler (Job Scheduler)
-- D) Dispatcher
-**Correct Answer**: C
-**Explanation**: The Long-Term Scheduler determines how many jobs are admitted from the job pool into main memory, thereby directly establishing the degree of multiprogramming.
-**Bloom's Level**: Understand
-
----
-
-## SECTION B: Short-Answer Conceptual Questions (5 Questions, 3-5 Marks Each)
-
-### Question 1 [3 Marks]
-**Distinguish clearly between an Orphan Process and a Zombie Process in Unix-like operating systems.**
-- **Model Answer Outline**:
-  - *Zombie Process*: Has finished execution (`exit()`), but its PCB entry remains in the kernel process table because its parent has not yet collected its exit code via `wait()`.
-  - *Orphan Process*: A process whose parent process terminated before it did. In POSIX systems, orphans are adopted by the root `init` / `systemd` process (PID 1), which periodically invokes `wait()` on them.
-
----
-
-### Question 2 [3 Marks]
-**Why does switching context between two threads within the same process require significantly less CPU time than switching between two separate processes?**
-- **Model Answer Outline**:
-  - Threads of the same process share the same virtual address space, memory page tables, and open file descriptors.
-  - A thread context switch only requires swapping CPU registers and stack pointers. A process context switch requires flushing or invalidating the Translation Lookaside Buffer (TLB) and reloading memory management registers (e.g., `CR3` on x86).
-
----
-
-### Question 3 [3 Marks]
-**State the primary role of the CPU Dispatcher and define dispatch latency.**
-- **Model Answer Outline**:
-  - The dispatcher is the kernel module that gives control of the CPU to the process selected by the short-term scheduler. It switches context, switches to user mode, and jumps to the proper location in the program.
-  - *Dispatch Latency*: The elapsed time taken by the dispatcher to stop one process and start another running.
-
----
-
-### Question 4 [3 Marks]
-**Explain the mechanism and purpose of the "Copy-on-Write" (COW) optimization during process creation using `fork()`.**
-- **Model Answer Outline**:
-  - Rather than making an immediate physical copy of all memory pages belonging to the parent, parent and child initially share the same physical pages marked read-only.
-  - If either process attempts to write to a page, a page fault occurs, and the kernel creates a private copy of only that specific modified page. This drastically reduces overhead when `fork()` is immediately followed by `exec()`.
-
----
-
-### Question 5 [3 Marks]
-**Identify three specific events that can cause a process to transition from the Running state to the Ready state.**
-- **Model Answer Outline**:
-  - 1. Expiration of the allocated time slice / quantum in a preemptive scheduling policy (e.g., Round Robin).
-  - 2. Arrival of a higher-priority process in a preemptive priority-based scheduler.
-  - 3. A voluntary yield system call (`sched_yield()`).
-
----
-
-## SECTION C: Long-Answer & Design Questions (5 Questions, 10-15 Marks Each)
-
-### Question 1 [10 Marks]
-**Provide an in-depth architectural analysis of the Process Control Block (PCB). Illustrate how the operating system kernel maintains PCBs in various scheduling queues, and detail the chronological step-by-step procedure during a CPU context switch.**
-- **Solution Blueprint & Evaluation Rubric**:
-  - *PCB Structural Elements (3 Marks)*: Explanation of PID, State, PC, Registers, Memory limits, Priority, Accounting, and I/O status.
-  - *Queue Organization (3 Marks)*: Diagram and explanation of Ready Queue, Device Wait Queues, and doubly-linked list representation in kernel space.
-  - *Context Switch Chronology (4 Marks)*: Interrupt trigger -> Save register state to PCB_A -> Scheduler selection -> Load memory map & registers from PCB_B -> Dispatch to PC_B.
-
----
-
-### Question 2 [10 Marks]
-**Draw and thoroughly explain the 5-State Process Model. Discuss every possible transition trigger between states. Furthermore, expand the model to include Suspended-Ready and Suspended-Blocked states, explaining why swapping is necessary.**
-- **Solution Blueprint & Evaluation Rubric**:
-  - *5-State Diagram & Descriptions (4 Marks)*: Accurate transitions (New, Ready, Running, Waiting, Terminated) with triggers.
-  - *7-State Extended Model with Swapping (4 Marks)*: Explanation of Suspended-Ready and Suspended-Blocked states in secondary storage.
-  - *Role of Medium-Term Scheduler (2 Marks)*: Rationale for swapping processes out when physical RAM is overcommitted.
-
----
-
-### Question 3 [12 Marks]
-**Examine process management in POSIX/Linux systems. Write a syntactically correct C program that uses `fork()`, `exec()`, and `wait()` to achieve process synchronization. Trace the exact sequence of outputs and state changes.**
-- **Solution Blueprint & Evaluation Rubric**:
-  - *C Program Implementation (5 Marks)*: Proper header inclusion, error handling for `fork() < 0`, child logic executing an external binary, and parent calling `wait()`.
-  - *Process Hierarchy & PID Analysis (4 Marks)*: Clear explanation of how child duplicates address space and how `wait()` captures child exit code.
-  - *Zombie Prevention Analysis (3 Marks)*: Discussion of exit status collection and process table reclamation.
-
----
-
-### Question 4 [10 Marks]
-**Compare and contrast Long-Term, Medium-Term, and Short-Term Schedulers across invocation frequency, execution location, primary objectives, and impact on system throughput.**
-- **Solution Blueprint & Evaluation Rubric**:
-  - *Comparative Matrix (5 Marks)*: Detailed multi-parameter table comparing the three schedulers.
-  - *Degree of Multiprogramming (3 Marks)*: Deep dive into how the Long-Term scheduler balances CPU-bound and I/O-bound processes.
-  - *Thrashing Prevention (2 Marks)*: Explanation of how the Medium-Term scheduler deallocates memory under high contention.
-
----
-
-### Question 5 [15 Marks]
-**Conduct a rigorous performance and architectural evaluation of Context Switching. Discuss both hardware and software sources of overhead, including cache pollution and TLB invalidation. Detail modern hardware-assisted optimizations such as Address Space Identifiers (PCID) and multiple register banks.**
-- **Solution Blueprint & Evaluation Rubric**:
-  - *Quantifying Direct vs Indirect Overhead (5 Marks)*: Direct register save/restore time vs indirect cache misses and pipeline stalls.
-  - *TLB Invalidation Mechanics (5 Marks)*: Why changing page directory base registers purges translation caches and how Process-Context Identifiers (PCID) in modern x86/ARM CPUs mitigate this.
-  - *Hardware Architecture Optimizations (5 Marks)*: Architectural register windows (e.g., SPARC), fast interrupt register banks, and asynchronous I/O threads.
-""",
-            "generic_baseline": """Operating System: Process Management
-
-An operating system manages processes in a computer. A process is a program in execution. When you double click an application, it becomes a process.
-
-Processes have different states like ready, running, and waiting. The CPU runs one process at a time (on single core systems) and switches between them. This is called context switching.
-
-The OS keeps track of processes using a Process Control Block (PCB). The PCB contains information about the process like its ID, state, and registers.
-
-Process scheduling is also important. The scheduler decides which process gets the CPU next using algorithms like First Come First Serve (FCFS) or Round Robin.
-
-Questions:
-1. What is a process?
-2. What is context switching?
-"""
-        }
-    }
-}
-
-
 class LLMService:
     def __init__(
         self,
@@ -313,26 +21,20 @@ class LLMService:
         api_key: Optional[str] = None,
         model: Optional[str] = None
     ):
-        """
-        provider: 'Google Gemini', 'OpenRouter', 'OpenAI', or 'auto'
-        api_key: User provided key or pulled from env
-        model: Model name for provider
-        """
         self.provider = provider
-        self.api_key = api_key or ""
-        self.model = model or ""
+        self.api_key = (api_key or "").strip()
+        self.model = (model or "").strip()
 
-        # Auto-detect provider and key from environment if not explicitly set
         self._resolve_credentials()
 
     def _resolve_credentials(self):
-        gemini_env = os.getenv("GEMINI_API_KEY", "")
-        openrouter_env = os.getenv("OPENROUTER_API_KEY", "")
-        openai_env = os.getenv("OPENAI_API_KEY", "")
+        gemini_env = os.getenv("GEMINI_API_KEY", "").strip()
+        openrouter_env = os.getenv("OPENROUTER_API_KEY", "").strip()
+        openai_env = os.getenv("OPENAI_API_KEY", "").strip()
 
         if self.provider == "Google Gemini":
             self.api_key = self.api_key or gemini_env
-            self.model = self.model or "gemini-1.5-flash"
+            self.model = self.model or "gemini-2.5-flash"
         elif self.provider == "OpenRouter":
             self.api_key = self.api_key or openrouter_env
             self.model = self.model or "openai/gpt-4o-mini"
@@ -340,22 +42,25 @@ class LLMService:
             self.api_key = self.api_key or openai_env
             self.model = self.model or "gpt-4o-mini"
         else:
-            # Auto detection
+            # Auto-detect from key or environment
             if self.api_key:
-                # Key provided manually in UI without provider override
                 if self.api_key.startswith("sk-or-"):
                     self.provider = "OpenRouter"
                     self.model = self.model or "openai/gpt-4o-mini"
                 elif self.api_key.startswith("AIza"):
                     self.provider = "Google Gemini"
-                    self.model = self.model or "gemini-1.5-flash"
+                    self.model = self.model or "gemini-2.5-flash"
                 elif self.api_key.startswith("sk-"):
                     self.provider = "OpenAI"
                     self.model = self.model or "gpt-4o-mini"
+                else:
+                    # Default key to Gemini if starts with AIza or generic
+                    self.provider = "Google Gemini"
+                    self.model = self.model or "gemini-2.5-flash"
             elif gemini_env:
                 self.provider = "Google Gemini"
                 self.api_key = gemini_env
-                self.model = self.model or "gemini-1.5-flash"
+                self.model = self.model or "gemini-2.5-flash"
             elif openrouter_env:
                 self.provider = "OpenRouter"
                 self.api_key = openrouter_env
@@ -366,132 +71,422 @@ class LLMService:
                 self.model = self.model or "gpt-4o-mini"
             else:
                 self.provider = "Offline Academic Engine"
-                self.model = "Curriculum Engine"
+                self.model = "Offline Engine"
 
     def has_live_credentials(self) -> bool:
         return bool(self.api_key and len(self.api_key.strip()) > 8)
 
     def generate(self, prompt: str, system_prompt: str = "") -> Dict[str, Any]:
         """
-        Executes query on selected provider (Gemini, OpenRouter, or OpenAI),
-        with fallback to high-fidelity academic engine.
+        Executes query on selected provider.
+        CRITICAL: If live credentials are provided, ANY error is captured and returned
+        explicitly so the user knows what happened, rather than silently falling back to a hardcoded topic.
         """
         start_time = time.time()
 
-        # 1. Google Gemini via google.generativeai
+        # 1. Google Gemini
         if self.provider == "Google Gemini" and self.has_live_credentials():
+            # Try official google.genai SDK
             try:
-                import google.generativeai as genai
-                genai.configure(api_key=self.api_key.strip())
-                g_model = genai.GenerativeModel(self.model or "gemini-1.5-flash")
+                from google import genai
+                client = genai.Client(api_key=self.api_key)
                 
-                full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
-                response = g_model.generate_content(full_prompt)
+                # Model normalization (support gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash, etc.)
+                target_model = self.model or "gemini-2.5-flash"
                 
-                duration = time.time() - start_time
+                full_content = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+                response = client.models.generate_content(
+                    model=target_model,
+                    contents=full_content
+                )
+                
                 content = response.text or ""
+                duration = time.time() - start_time
                 return {
                     "success": True,
                     "content": content,
                     "provider": "Google Gemini",
-                    "model_used": self.model,
+                    "model_used": target_model,
                     "duration_sec": round(duration, 2),
                     "word_count": len(content.split()),
                     "is_live_api": True,
                     "error": None
                 }
-            except Exception as e:
-                # Log or fallback
-                pass
+            except Exception as e1:
+                # Secondary attempt: Google OpenAI-compatible endpoint
+                try:
+                    from openai import OpenAI
+                    client = OpenAI(
+                        api_key=self.api_key,
+                        base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+                    )
+                    messages = []
+                    if system_prompt:
+                        messages.append({"role": "system", "content": system_prompt})
+                    messages.append({"role": "user", "content": prompt})
 
-        # 2. OpenRouter via OpenAI client with openrouter base_url
+                    target_model = self.model or "gemini-2.5-flash"
+                    resp = client.chat.completions.create(
+                        model=target_model,
+                        messages=messages,
+                        temperature=0.6,
+                    )
+                    content = resp.choices[0].message.content or ""
+                    duration = time.time() - start_time
+                    return {
+                        "success": True,
+                        "content": content,
+                        "provider": "Google Gemini (Endpoint)",
+                        "model_used": target_model,
+                        "duration_sec": round(duration, 2),
+                        "word_count": len(content.split()),
+                        "is_live_api": True,
+                        "error": None
+                    }
+                except Exception as e2:
+                    # Return the exact error so the user sees it in the UI!
+                    return {
+                        "success": False,
+                        "content": None,
+                        "provider": "Google Gemini",
+                        "model_used": self.model,
+                        "duration_sec": round(time.time() - start_time, 2),
+                        "word_count": 0,
+                        "is_live_api": True,
+                        "error": f"Gemini API Error: {str(e1)} (Fallback attempt: {str(e2)})"
+                    }
+
+        # 2. OpenRouter
         if self.provider == "OpenRouter" and self.has_live_credentials():
             try:
                 from openai import OpenAI
                 client = OpenAI(
                     base_url="https://openrouter.ai/api/v1",
-                    api_key=self.api_key.strip()
+                    api_key=self.api_key
                 )
                 messages = []
                 if system_prompt:
                     messages.append({"role": "system", "content": system_prompt})
                 messages.append({"role": "user", "content": prompt})
 
+                target_model = self.model or "openai/gpt-4o-mini"
                 response = client.chat.completions.create(
-                    model=self.model or "openai/gpt-4o-mini",
+                    model=target_model,
                     messages=messages,
                     temperature=0.6,
                 )
-                duration = time.time() - start_time
                 content = response.choices[0].message.content or ""
+                duration = time.time() - start_time
                 return {
                     "success": True,
                     "content": content,
                     "provider": "OpenRouter",
-                    "model_used": self.model,
+                    "model_used": target_model,
                     "duration_sec": round(duration, 2),
                     "word_count": len(content.split()),
                     "is_live_api": True,
                     "error": None
                 }
             except Exception as e:
-                pass
+                return {
+                    "success": False,
+                    "content": None,
+                    "provider": "OpenRouter",
+                    "model_used": self.model,
+                    "duration_sec": round(time.time() - start_time, 2),
+                    "word_count": 0,
+                    "is_live_api": True,
+                    "error": f"OpenRouter API Error: {str(e)}"
+                }
 
-        # 3. OpenAI Official API
+        # 3. OpenAI
         if self.provider == "OpenAI" and self.has_live_credentials():
             try:
                 from openai import OpenAI
-                client = OpenAI(api_key=self.api_key.strip())
+                client = OpenAI(api_key=self.api_key)
                 messages = []
                 if system_prompt:
                     messages.append({"role": "system", "content": system_prompt})
                 messages.append({"role": "user", "content": prompt})
 
+                target_model = self.model or "gpt-4o-mini"
                 response = client.chat.completions.create(
-                    model=self.model or "gpt-4o-mini",
+                    model=target_model,
                     messages=messages,
                     temperature=0.6,
                 )
-                duration = time.time() - start_time
                 content = response.choices[0].message.content or ""
+                duration = time.time() - start_time
                 return {
                     "success": True,
                     "content": content,
                     "provider": "OpenAI",
-                    "model_used": self.model,
+                    "model_used": target_model,
                     "duration_sec": round(duration, 2),
                     "word_count": len(content.split()),
                     "is_live_api": True,
                     "error": None
                 }
             except Exception as e:
-                pass
+                return {
+                    "success": False,
+                    "content": None,
+                    "provider": "OpenAI",
+                    "model_used": self.model,
+                    "duration_sec": round(time.time() - start_time, 2),
+                    "word_count": 0,
+                    "is_live_api": True,
+                    "error": f"OpenAI API Error: {str(e)}"
+                }
 
-        # 4. Fallback Academic Engine
+        # 4. Offline Academic Engine (ONLY when no credentials provided)
         return self._knowledge_engine_fallback(prompt)
 
     def _knowledge_engine_fallback(self, prompt: str) -> Dict[str, Any]:
+        """
+        Fallback only when user operates in offline demo mode without an API key.
+        Dynamically extracts topic from prompt if not OS.
+        """
+        import re
+        topic_match = re.search(r"Subject:\s*([^\n]+)", prompt)
+        unit_match = re.search(r"Unit(?:\s*\/\s*Module)?:\s*([^\n]+)", prompt)
+        level_match = re.search(r"Level:\s*([^\n]+)", prompt)
+
+        topic = topic_match.group(1).strip() if topic_match else "Computer Science"
+        unit = unit_match.group(1).strip() if unit_match else "Core Principles"
+        level = level_match.group(1).strip() if level_match else "B.Tech"
+
         is_naive = "Explain " in prompt and len(prompt) < 120 and "Act as" not in prompt
         is_assignment_only = "Assignment & Examination Question Bank" in prompt or "SECTION A: Multiple Choice" in prompt
         is_study_only = "Study Material module" in prompt
-        
-        os_data = SAMPLE_KNOWLEDGE_BASE["Operating System"]["Process Management"]
-        
+
         if is_naive:
-            content = os_data["generic_baseline"]
+            content = f"""# {topic}: {unit} (Overview)
+{topic} is an essential subject in computing. {unit} is a key module covering foundational mechanisms, architecture, and operational lifecycle.
+
+Key Concepts:
+1. Core definition of {unit}.
+2. Operational principles and architecture.
+3. System components and workflows.
+
+Questions:
+1. Define {unit} in {topic}.
+2. Explain the fundamental components of {unit}.
+"""
         elif is_assignment_only:
-            content = os_data["assignment"]
-        elif is_study_only:
-            content = os_data["study_material"]
+            content = f"""# Assignment & Examination Question Bank: {unit}
+*Subject: {topic} | Target: {level}*
+
+---
+
+## SECTION A: Multiple Choice Questions (5 Questions)
+
+### MCQ 1
+**Question**: What is the primary operational objective of {unit} in {topic}?
+- A) Hardware clock synchronization
+- B) System resource management and execution isolation
+- C) Peripheral bus deallocation
+- D) Secondary cache invalidation
+**Correct Answer**: B
+**Explanation**: In {topic}, {unit} is primarily responsible for coordinating system resources and ensuring robust task isolation.
+**Bloom's Level**: Understand
+
+### MCQ 2
+**Question**: Which data structure or mechanism is fundamentally required to maintain state in {unit}?
+- A) Translation Lookaside Buffer
+- B) Control Block / State Table
+- C) Circular FIFO Buffer
+- D) Hash Index Map
+**Correct Answer**: B
+**Explanation**: A control block or state record stores critical operational metadata required for state transitions.
+**Bloom's Level**: Understand
+
+### MCQ 3
+**Question**: How does {unit} handle resource contention under high concurrency?
+- A) It forcibly aborts all competing threads
+- B) It employs scheduling queues and mutual exclusion primitives
+- C) It bypasses memory protection registers
+- D) It drops non-priority interrupts
+**Correct Answer**: B
+**Explanation**: Concurrency is managed via prioritized scheduling queues and synchronization primitives to prevent race conditions.
+**Bloom's Level**: Analyze
+
+### MCQ 4
+**Question**: In modern implementations of {unit}, what is the primary source of operational latency?
+- A) Context switching and state saving overhead
+- B) Static binary compilation
+- C) Read-only data caching
+- D) Symbolic link resolution
+**Correct Answer**: A
+**Explanation**: Preserving execution contexts and reloading architectural registers introduces unavoidable system overhead.
+**Bloom's Level**: Analyze
+
+### MCQ 5
+**Question**: What is the consequence if state cleanup is neglected upon task completion in {unit}?
+- A) Instant operating system panic
+- B) Memory leaks and dangling state entries in the kernel table
+- C) Hardware register degradation
+- D) Automatic privilege escalation
+**Correct Answer**: B
+**Explanation**: Failing to reclaim allocated resources results in lingering metadata entries and resource leaks.
+**Bloom's Level**: Apply
+
+---
+
+## SECTION B: Short-Answer Conceptual Questions (5 Questions, 3-5 Marks Each)
+
+### Question 1 [3 Marks]
+**Define the scope and core responsibilities of {unit} in modern computing environments.**
+- **Model Answer Outline**:
+  - Clear definition of {unit} within {topic}.
+  - Key responsibilities: Allocation, execution coordination, and state monitoring.
+  - Significance for system reliability and throughput.
+
+### Question 2 [3 Marks]
+**Explain the architectural role of state management tables in {unit}.**
+- **Model Answer Outline**:
+  - Preservation of active runtime parameters and memory pointers.
+  - Coordination between hardware registers and operating system routines.
+
+### Question 3 [3 Marks]
+**Distinguish between static resource reservation and dynamic on-demand allocation in {unit}.**
+- **Model Answer Outline**:
+  - Static: Predictable but inefficient utilization.
+  - Dynamic: Highly adaptable, minimizes fragmentation, requires active runtime tracking.
+
+### Question 4 [3 Marks]
+**Identify two critical edge cases or failure modes in {unit} and how modern systems prevent them.**
+- **Model Answer Outline**:
+  - Deadlock / starvation: Resolved using priority inheritance and timeout protocols.
+  - Memory boundary violation: Enforced via hardware protection registers.
+
+### Question 5 [3 Marks]
+**Why is modular decomposition essential when designing systems for {unit}?**
+- **Model Answer Outline**:
+  - Isolation of faults, ease of verification, and maintainability across diverse architectures.
+
+---
+
+## SECTION C: Long-Answer & Design Questions (5 Questions, 10-15 Marks Each)
+
+### Question 1 [10 Marks]
+**Provide an end-to-end architectural walkthrough of {unit}. Illustrate the lifecycle of an entity within this module from creation to reclamation, detailing state transitions and queue management.**
+- **Solution Blueprint & Evaluation Rubric**:
+  - Labeled architectural diagram (3 Marks)
+  - Lifecycle state explanations and triggers (4 Marks)
+  - Queue coordination and synchronization strategies (3 Marks)
+
+### Question 2 [12 Marks]
+**Critically analyze the performance bottlenecks associated with {unit}. Propose two software or architectural optimizations and derive their mathematical impact on system throughput.**
+- **Solution Blueprint & Evaluation Rubric**:
+  - Identification of overhead sources (cache misses, context switches) (4 Marks)
+  - Detailed design of Optimization 1 & 2 (5 Marks)
+  - Throughput / latency derivation (3 Marks)
+
+### Question 3 [10 Marks]
+**Design an algorithm or system routine for {unit} that guarantees fair resource allocation without causing starvation. Write syntactically correct pseudocode and analyze its computational complexity.**
+- **Solution Blueprint & Evaluation Rubric**:
+  - Algorithmic specification and fairness criteria (3 Marks)
+  - Complete pseudocode with error handling (4 Marks)
+  - Time and space complexity analysis (3 Marks)
+"""
         else:
-            content = f"{os_data['study_material']}\n\n---\n\n{os_data['assignment']}"
+            content = f"""# {topic}: {unit}
+*Academic Level: {level} | Curriculum Study Material*
+
+---
+
+## 1. Introduction & Learning Objectives
+{topic} is a core discipline in computing and engineering. The module **{unit}** addresses the core architectural concepts, protocols, and mechanisms necessary for building robust and scalable systems.
+
+### Course Learning Outcomes (CLOs)
+By the end of this study module, {level} students will be able to:
+1. **Define and Contrast** foundational terminology and paradigms in {unit}.
+2. **Model and Analyze** internal state lifecycles and architectural interactions.
+3. **Evaluate** system performance trade-offs, overhead sources, and resource contention.
+4. **Implement** robust algorithms and system routines adhering to industry standards.
+
+---
+
+## 2. Core Definitions & Technical Glossary
+- **{unit}**: The formal discipline and implementation subsystem responsible for managing operations, scheduling, and resources in {topic}.
+- **Execution Context**: The complete set of registers, memory pointers, and metadata representing the active state of an executing unit.
+- **State Transition Model**: The discrete lifecycle through which entities transition (e.g., Initialization, Active, Waiting, Terminated).
+- **Control Metadata Structure**: The kernel or runtime data record maintaining identification, scheduling priority, and allocated permissions.
+- **Throughput & Latency**: Key performance metrics measuring completed operations per unit time versus turnaround delay.
+
+---
+
+## 3. In-Depth Technical Concepts & Architectural Walkthrough
+### 3.1 Core Mechanism & Lifecycle Flow
+In {topic}, {unit} relies on structured state machines:
+```
+[ Initialization ] ---> [ Ready / Queued ] <---> [ Active Execution ] ---> [ Completion ]
+                              ^                         |
+                              |                         | Resource Wait
+                              +--- [ Blocked / Pending ] +
+```
+- **Initialization**: Allocation of control structures and verification of memory bounds.
+- **Queued**: Placement into priority scheduling structures awaiting processor or bus assignment.
+- **Active Execution**: Direct execution on system hardware with active instruction fetching.
+- **Blocked**: Descheduled during asynchronous I/O or lock contention.
+
+### 3.2 State Management & Control Tables
+Every execution unit maintains a dedicated record holding:
+| Component | Functionality |
+| :--- | :--- |
+| **Identifier (ID)** | Unique system-wide identifier. |
+| **Current State** | Flag indicating operational status (Ready, Running, Blocked). |
+| **Registers / Pointers** | Saved execution counter and stack frame pointers. |
+| **Resource Limits** | Quotas for memory, open handles, and execution priority. |
+
+---
+
+## 4. Real-World Intuitive Analogy
+**The Air Traffic Control Tower at an International Airport:**
+- **The Runway**: The limited computing hardware (CPU / Data Bus) that can only handle one flight at a time.
+- **The Aircraft**: Independent tasks or processes awaiting landing and takeoff.
+- **The Controller**: The scheduler in {unit} coordinating approach queues, holding patterns, and emergency priority slots.
+- **Holding Pattern**: The Waiting state while ground support or runway clearing (I/O) completes.
+
+---
+
+## 5. Practical Implementation & Architectural Pattern
+```c
+// Conceptual Architectural Pattern for {unit}
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {{
+    int id;
+    int state; // 0: Init, 1: Ready, 2: Active, 3: Done
+    void (*execute_handler)(void*);
+}} UnitTask;
+
+void run_task(UnitTask* task) {{
+    if (task && task->state == 1) {{
+        task->state = 2; // Transition to Active
+        printf("[Task %d] Executing operational logic...\\n", task->id);
+        // ... perform system work ...
+        task->state = 3; // Terminated
+    }}
+}}
+```
+
+---
+
+## 6. Key Takeaways & Exam Revision Summary
+- Understand the trade-offs between static allocation and dynamic queuing.
+- Context switches incur overhead: minimize cache thrashing and state-saving penalties.
+- Always implement clean termination to prevent dangling descriptors and memory leaks.
+"""
 
         return {
             "success": True,
             "content": content,
             "provider": "Offline Academic Engine",
-            "model_used": "Curriculum Engine (High-Fidelity)",
-            "duration_sec": 0.85,
+            "model_used": "Dynamic Syllabus Generator",
+            "duration_sec": 0.5,
             "word_count": len(content.split()),
             "is_live_api": False,
             "error": None

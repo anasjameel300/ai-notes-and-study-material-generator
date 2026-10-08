@@ -1,25 +1,32 @@
 """
 Prompt Engineering Core for AI Assignment & Study Material Generator.
-
-This module houses the carefully engineered prompt architectures that produce
-university-grade Study Materials, Assignment Sheets, and Examination Question Banks,
-while preserving the ability to compare with naive/generic prompts for academic evaluation.
+Guarantees that user's custom Course Topic, Unit/Module, AND specific Focus Areas
+are strictly injected and emphasized in the generation.
 """
 
 from typing import Dict, Any, List
 
-def build_study_material_prompt(topic: str, level: str, unit: str, depth: str = "Comprehensive") -> str:
+def build_study_material_prompt(topic: str, level: str, unit: str, focus_areas: str = "", depth: str = "Comprehensive") -> str:
     """
     Engineered prompt specifically crafted for in-depth, syllabus-standard study material.
+    Strictly incorporates topic, unit, and user's specific focus concepts.
     """
+    focus_directive = ""
+    if focus_areas and focus_areas.strip():
+        focus_directive = f"""
+PRIMARY FOCUS & MANDATORY TOPICS:
+The student/instructor has requested that you EXPLICITLY and THOROUGHLY cover the following concepts, architectures, and models:
+👉 {focus_areas.strip()}
+Make sure every single one of these concepts is explained with technical depth, architectural diagrams, formulas, and real-world examples!
+"""
+
     return f"""Act as a distinguished Senior Professor and Curriculum Director in {topic}.
 
 Your task is to write a master-class, publication-grade academic Study Material module on:
-- Subject: {topic}
+- Subject / Discipline: {topic}
 - Academic Level: {level}
-- Unit / Module: {unit}
-- Coverage Depth: {depth}
-
+- Unit / Module Title: {unit}
+{focus_directive}
 Format your output in clean, professional Markdown with the following exact structure:
 
 # {topic}: {unit}
@@ -31,39 +38,48 @@ Format your output in clean, professional Markdown with the following exact stru
 
 ## 2. Core Definitions & Technical Glossary
 - Provide precise, exam-standard definitions for every critical term, concept, and metric in this unit.
-- Format with bold terms followed by technical explanations and mathematical/symbolic representations where applicable.
+- If focus areas ({focus_areas or unit}) are specified, define each one with mathematical / formal clarity.
 
 ## 3. In-Depth Technical Concepts & Architectural Walkthrough
 - Provide an exhaustive, step-by-step conceptual explanation tailored to {level} students.
-- Break down the core mechanisms, internal structures, state transitions, algorithms, or protocols.
-- Include structured ASCII or Markdown comparison tables, state diagrams, and workflow summaries.
-- Address edge cases, race conditions, performance bottlenecks, or trade-offs.
+- Break down the core mechanisms, internal structures, state transitions, mathematical equations, or neural architectures.
+- Include structured ASCII or Markdown comparison tables, component diagrams, and workflow summaries.
+- Address edge cases, training bottlenecks, optimization trade-offs, or scaling laws.
 
 ## 4. Real-World Intuitive Analogy
 - Provide a memorable, high-clarity real-world analogy that makes abstract theoretical concepts intuitive.
 - Provide a clean mapping table connecting each component of the analogy to its technical counterpart.
 
-## 5. Practical Implementation & Real-World Case Study
-- Provide realistic code snippets, pseudocode, or industrial architecture examples (e.g., Linux kernel, POSIX, production systems).
-- Walk through the implementation logic line-by-line.
-- Highlight key system calls, APIs, or design patterns used in production.
+## 5. Practical Implementation & Real-World Code / Case Study
+- Provide realistic code snippets (e.g. PyTorch, Python, POSIX C, or pseudocode) demonstrating real-world usage.
+- Walk through the implementation logic step-by-step.
+- Highlight key libraries, APIs, or design patterns used in production.
 
 ## 6. Key Takeaways & Quick Revision Summary
 - Bullet-point high-yield facts, formula cheat-sheets, and common exam pitfalls to avoid.
 """
 
 
-def build_assignment_prompt(topic: str, level: str, unit: str, num_mcqs: int = 5) -> str:
+def build_assignment_prompt(topic: str, level: str, unit: str, focus_areas: str = "", num_mcqs: int = 5) -> str:
     """
     Engineered prompt specifically crafted for multi-tiered assignments and question banks.
+    Strictly assesses the user's specific topic and focus concepts.
     """
+    focus_directive = ""
+    if focus_areas and focus_areas.strip():
+        focus_directive = f"""
+PRIMARY FOCUS & MANDATORY TOPICS:
+Ensure your questions directly test and evaluate the following concepts:
+👉 {focus_areas.strip()}
+"""
+
     return f"""Act as an Examination Board Chief Moderator for {level} in {topic}.
 
 Create a rigorous, university-standard Assignment & Examination Question Bank for:
 - Subject: {topic}
 - Academic Level: {level}
-- Unit: {unit}
-
+- Unit / Module: {unit}
+{focus_directive}
 Ensure the questions assess varying cognitive levels (Recall, Comprehension, Application, Synthesis).
 Format your output in clean Markdown following this exact structure:
 
@@ -109,40 +125,12 @@ For each question:
 """
 
 
-def build_complete_coursepack_prompt(topic: str, level: str, unit: str) -> str:
-    """
-    Combines both study material and assignment into a single unified course pack.
-    """
-    return f"""Act as a distinguished Senior Professor and Curriculum Architect in {topic}.
-
-Create a complete, end-to-end Course Module Pack (Comprehensive Study Material + Full Assignment & Question Bank) for:
-- Subject: {topic}
-- Academic Level: {level}
-- Unit / Module: {unit}
-
-You must strictly include:
-PART I: COMPREHENSIVE STUDY MATERIAL
-1. Executive Introduction & Learning Outcomes
-2. Formal Definitions & Core Technical Glossary
-3. Exhaustive Conceptual Deep Dive (Mechanisms, Architectures, Comparison Tables)
-4. Intuitive Real-Life Analogy with Technical Mapping
-5. Practical Implementation (POSIX / Real-world Code & Architecture)
-6. Summary & High-Yield Exam Revision Notes
-
-PART II: ASSIGNMENT & EXAMINATION QUESTION BANK
-7. Section A: 5 High-Quality MCQs (with Options, Correct Answer, Explanation, and Bloom's Level)
-8. Section B: 5 Short-Answer Conceptual Questions (3-5 Marks Each, with Model Answer Outlines)
-9. Section C: 5 University Long-Answer Exam Questions (10-15 Marks Each, with Marking Rubrics and Diagrams Expected)
-
-Use rigorous academic tone, precise terminology, and clean Markdown formatting throughout.
-"""
-
-
-def get_naive_generic_prompt(topic: str, unit: str, level: str) -> str:
+def get_naive_generic_prompt(topic: str, unit: str, level: str, focus_areas: str = "") -> str:
     """
     Baseline naive prompt used for comparison demonstration.
     """
-    return f"Explain {topic} - {unit} for {level} and give some questions."
+    focus_str = f" including {focus_areas}" if focus_areas else ""
+    return f"Explain {topic} - {unit}{focus_str} for {level} and give some questions."
 
 
 def get_prompt_engineering_breakdown() -> List[Dict[str, str]]:
@@ -161,6 +149,11 @@ def get_prompt_engineering_breakdown() -> List[Dict[str, str]]:
             "why_it_matters": "Prevents oversimplification or irrelevant advanced trivia; matches university syllabus standards."
         },
         {
+            "technique": "Strict Injection of Focus Concepts",
+            "implementation": "Forces explicit coverage of user-specified topics (e.g. CNNs, Transformers, LLMs).",
+            "why_it_matters": "Eliminates generic boilerplate and guarantees that student-requested subtopics are taught and tested."
+        },
+        {
             "technique": "Structural & Format Constraints",
             "implementation": "Enforces numbered sections, markdown tables, exact MCQ syntax, and rubric blocks.",
             "why_it_matters": "Enables deterministic parsing into interactive quizzes, printable sheets, and structured tabs without model hallucination or omission."
@@ -169,10 +162,5 @@ def get_prompt_engineering_breakdown() -> List[Dict[str, str]]:
             "technique": "Cognitive Scaffolding (Bloom's Taxonomy)",
             "implementation": "Orchestrates progression from Recall (Definitions) → Comprehension (Analogies) → Application (Code) → Evaluation (University Long Questions).",
             "why_it_matters": "Transforms simple information retrieval into a holistic learning and testing environment."
-        },
-        {
-            "technique": "Dual-Key Rubric Engineering",
-            "implementation": "Demands model answer outlines, distractor explanations, and mark distribution schemas.",
-            "why_it_matters": "Provides immediate value to educators for grading and to students for self-assessment."
         }
     ]

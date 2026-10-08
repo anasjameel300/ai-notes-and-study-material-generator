@@ -123,6 +123,43 @@ def generate_mind_tree_mermaid(topic: str, unit: str) -> str:
     class C1a,C1b,C1c,C2a,C2b,C2c,C2d,C3a,C3b,C3c,C3d,C4a,C4b,C4c,C5a,C5b,C5c leafStyle;
 """
 
+    elif any(term in (topic.lower() + " " + unit.lower()) for term in ["ai", "ml", "learning", "neural", "cnn", "llm", "rnn"]):
+        return """graph TD
+    Root["🧠 AI & Machine Learning Architectures"] --> C1["1. Deep Learning Foundations"]
+    Root --> C2["2. Vision Models (CNN & LVM)"]
+    Root --> C3["3. Sequence Models (RNN & LSTM)"]
+    Root --> C4["4. Foundation Models (Transformers & LLMs)"]
+    Root --> C5["5. Training & Optimization"]
+
+    C1 --> C1a["Perceptrons & Multi-Layer Perceptrons"]
+    C1 --> C1b["Activation Functions: ReLU, GELU, Softmax"]
+    C1 --> C1c["Backpropagation & Autograd"]
+
+    C2 --> C2a["Convolutional Layers (Kernels & Strides)"]
+    C2 --> C2b["Pooling & Feature Maps (ResNet, VGG)"]
+    C2 --> C2c["Large Vision Models (LVMs, ViT, CLIP)"]
+
+    C3 --> C3a["Recurrent Hidden States"]
+    C3 --> C3b["Gating Mechanisms (LSTM & GRU)"]
+    C3 --> C3c["Vanishing Gradient Mitigation"]
+
+    C4 --> C4a["Self-Attention & Multi-Head Attention"]
+    C4 --> C4b["Encoder-Decoder vs Decoder-Only (GPT)"]
+    C4 --> C4c["LLM Alignment: SFT, RLHF, DPO"]
+
+    C5 --> C5a["Loss Functions (Cross-Entropy, MSE)"]
+    C5 --> C5b["Optimizers: AdamW, SGD with Momentum"]
+    C5 --> C5c["Scaling Laws & Distributed Training"]
+
+    classDef rootStyle fill:#1e1b4b,stroke:#4338ca,stroke-width:2px,color:#fff;
+    classDef branchStyle fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#0f172a;
+    classDef leafStyle fill:#eff6ff,stroke:#60a5fa,stroke-width:1px,color:#1e3a8a;
+
+    class Root rootStyle;
+    class C1,C2,C3,C4,C5 branchStyle;
+    class C1a,C1b,C1c,C2a,C2b,C2c,C3a,C3b,C3c,C4a,C4b,C4c,C5a,C5b,C5c leafStyle;
+"""
+
     elif "Normal" in unit or "Database" in topic:
         return """graph TD
     Root["🧠 Relational Normalization"] --> C1["Functional Dependencies"]

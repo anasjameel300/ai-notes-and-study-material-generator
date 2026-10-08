@@ -1,78 +1,64 @@
 # 🎓 AI Assignment & Study Material Generator
 
-A production-ready academic curriculum and assignment suite designed for educators, professors, and students. The system generates syllabus-standard study modules, student assignment papers, teacher solution rubrics, and interactive self-assessment quizzes from any course topic.
+A production-ready academic curriculum and assignment suite designed for educators, professors, and students. The system generates syllabus-standard study modules, unified assignment sheets with on-demand solutions, interactive flashcards, visual mind trees, and timed exam-mode practice quizzes.
 
 ---
 
-## 📌 Core Capabilities
+## 📌 Core Modules
 
-### 1. 📖 Comprehensive Study Material Module
-- **Introduction & Learning Outcomes**: 4-5 measurable Course Learning Outcomes (CLOs) mapped to Bloom's Revised Taxonomy verbs.
-- **Core Definitions & Technical Glossary**: Syllabus-standard technical definitions with mathematical and formal notations.
-- **In-Depth Conceptual Breakdown**: Architectural walkthroughs, state models, queue diagrams, and performance trade-offs.
-- **Real-World Intuitive Analogies**: Concrete mappings connecting abstract technical concepts to intuitive everyday systems (e.g., Michelin Head Chef kitchen for CPU scheduling).
+### 1. 📖 Comprehensive Study Material
+- **Course Learning Outcomes (CLOs)**: Mapped to Bloom's Revised Taxonomy verbs.
+- **Formal Definitions & Technical Glossary**: Exam-standard definitions with mathematical notations.
+- **In-Depth Conceptual Breakdown**: Architectural walkthroughs, state models, queue diagrams.
+- **Real-World Intuitive Analogies**: Concrete mappings connecting abstract concepts to intuitive everyday systems (e.g., Michelin Head Chef kitchen for CPU scheduling).
 - **Practical Implementation**: Production-grade POSIX C and real-world system calls (`fork()`, `exec()`, `wait()`).
 - **Exam Revision Cheat-Sheet**: High-yield takeaways and common semester exam traps.
 
-### 2. 📝 Student Assignment Sheet
-- Clean, classroom-ready format designed for direct student distribution.
-- **Section A**: Multiple Choice Questions (with problem stems and choices, without revealing answers).
-- **Section B**: Short-Answer Conceptual Questions (with assigned marks).
-- **Section C**: University Long-Answer & Design Questions (10-15 marks each).
-- **Download**: One-click export to Markdown (`.md`).
+### 2. 🌳 Mind Tree (Hierarchical Concept Map)
+- Visual top-down concept tree using **Mermaid diagram syntax**.
+- Breaks down the unit into Core Concepts, State Transitions, Kernel PCB Architecture, CPU Scheduling, and POSIX Implementation.
 
-### 3. 🧑‍🏫 Teacher Solutions & Grading Rubrics
-- Comprehensive evaluation guide for instructors and examiners.
-- Detailed rationale for correct MCQ options and common misconceptions for wrong distractors.
-- Model answer outlines for conceptual short questions.
-- Step-by-step marking schemes and diagram requirements for university long-answer questions.
+### 3. 🗂️ Interactive Study Flashcards
+- High-yield flashcard deck extracted automatically from definitions, analogies, and system calls.
+- Interactive **"Flip Card"** animation with progress tracker (`Card X of Y`).
 
-### 4. 🎯 Interactive Practice Quiz
-- Allows students to self-test directly in the web application.
-- Instant automated scoring, accuracy percentages, and in-depth conceptual explanations.
+### 4. 📝 Unified Assignment Sheet (Questions & Answers)
+- **Section A**: Multiple Choice Questions (with on-demand `💡 Show Answer & Explanation` expander).
+- **Section B**: Short-Answer Conceptual Questions (with on-demand `💡 Show Model Answer Outline` expander).
+- **Section C**: University Long-Answer & Design Questions (with on-demand `💡 Show Solution Blueprint & Marking Rubric` expander).
+- **Export Options**: Download clean unsolved question paper or full solutions master key in Markdown (`.md`).
 
-### 5. 🔬 Background Prompt Engineering (Evaluation Mode)
-- Built with a prompt engineering architecture: Role Prompting, Audience Calibration, Structural Schemas, and Bloom's Cognitive Scaffolding.
-- Optional toggle: **"Include Naive Prompt Comparison"** lets students and evaluators contrast the production output against a baseline naive prompt (`"Explain Operating System"`).
+### 5. 🎯 Practice Quiz (30-Minute Timed Exam Mode)
+- **Exam Simulator**: Real-time JavaScript countdown timer (configurable to 15, 30, 45, or 60 minutes).
+- **Blind Submission**: Answers and explanations remain hidden while taking the exam.
+- **Automated Grading**: Instant score calculation, accuracy percentage, and question-by-question review with explanations upon clicking **"Submit Answers"**.
+
+### 6. 🔬 Background Prompt Engineering (Evaluation Mode)
+- Built on persona prompting, audience calibration, and cognitive scaffolding.
+- Optional toggle: **"Include Naive Prompt Comparison"** compares the output with a naive baseline prompt (`"Explain Operating System"`).
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Multi-Provider API Setup
 
-### 1. Installation
-Navigate to the project folder:
-```powershell
-cd "c:\Users\anasjameel\Desktop\local notebook"
+Provide any **ONE** of the following in your `.env` file or directly in the sidebar:
+```env
+# 1. Google Gemini API (Recommended free tier)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# 2. OpenRouter API (Claude, Llama 3, DeepSeek, GPT-4o)
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+# 3. OpenAI API (GPT-4o, GPT-4o-mini)
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-Install requirements:
-```powershell
-pip install -r requirements.txt
-```
+*(Note: If no API key is provided, the application runs seamlessly in **High-Fidelity Offline Engine** mode).*
 
-### 2. Launching the App
-Start the Streamlit application:
+---
+
+## 🚀 Running the Project
 ```powershell
 streamlit run app.py
 ```
-Open **[http://localhost:8501](http://localhost:8501)** in your web browser.
-
-### 3. API Key Configuration (Optional)
-- **Live Mode**: Enter your OpenAI API key in the sidebar to generate custom material on any topic.
-- **High-Fidelity Offline Engine**: Works out-of-the-box with comprehensive curriculum presets (Operating Systems, DBMS, Computer Networks, Data Structures) for testing and viva presentation without requiring an API key.
-
----
-
-## 📂 Project Structure
-```
-local notebook/
-├── app.py                   # Main Streamlit academic application
-├── prompts.py               # Prompt engineering templates & curriculum builders
-├── llm_service.py           # LLM service with live OpenAI API and offline knowledge engine
-├── quiz_engine.py           # MCQ parser and interactive quiz state evaluator
-├── static/
-│   └── style.css            # Custom CSS for academic cards, badges, and clean layout
-├── requirements.txt         # Project dependencies
-├── .env.example             # Environment template
-└── README.md                # Project documentation
-```
+Open **[http://localhost:8501](http://localhost:8501)** in your browser.
