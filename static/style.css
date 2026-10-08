@@ -1,0 +1,147 @@
+/* AI Assignment & Study Material Generator — Academic Styling */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-light: #eff6ff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-light: #e2e8f0;
+  --card-bg: #ffffff;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-main);
+  background-color: #f8fafc;
+}
+
+/* Main App Header */
+.app-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 14px;
+  padding: 2rem 2.2rem;
+  color: #ffffff;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.15);
+  border: 1px solid #334155;
+}
+
+.app-header .tagline {
+  display: inline-block;
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.app-header h1 {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #ffffff !important;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.app-header p {
+  color: #94a3b8;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* Question Cards */
+.question-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Flashcard Container */
+.flashcard-box {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2.2rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  margin-bottom: 1.5rem;
+}
+
+.flashcard-box:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 12px 28px -5px rgba(37, 99, 235, 0.1);
+}
+
+.flashcard-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 0.8rem;
+  width: fit-content;
+}
+
+.flashcard-content {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+.flashcard-answer {
+  background: #f0fdf4;
+  border-left: 4px solid #10b981;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  color: #064e3b;
+  line-height: 1.5;
+}
+
+/* Mind Tree Container */
+.mindtree-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Quiz Submission Status Pill */
+.quiz-pill-correct {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.quiz-pill-incorrect {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
